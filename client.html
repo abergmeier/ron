@@ -1,0 +1,279 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<title>RON</title>
+		<script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=true"></script>
+		<script type="text/javascript" src="mimic.js"></script>
+		<script type="text/javascript">
+			//save the unique player id
+			var playerId;
+			var playerName;
+			var playerLines = new Array();
+		
+			//save the last servertime of a received update
+			var lastServerTime;
+			var lastServerPosition = new Array(0, 0);
+			var map;
+			var marker;
+			var bounds;
+
+			var watchID;
+			
+			var geoImpl; //which interface for location retrieval to use
+		
+			function callRPCMethod(methodName)
+			{
+				var request = new XmlRpcRequest("http://ron.lcid-fire.org/server.php", methodName);
+				for(var i = 1; i < arguments.length; i++)
+				{
+					request.addParam(arguments[i]);
+				}
+				var response = request.send();
+				
+				response.parseXML();
+				return response.params;
+			}
+		
+			function submitPosition(position)
+			{
+				var lat = position.coords.latitude;
+				var lng = position.coords.longitude;
+				callRPCMethod("updatePosition", playerId, lat, lng);
+				lastServerPosition[0] = lat; 
+				lastServerPosition[1] = lng;
+				
+				var myLatLng = new google.maps.LatLng(lat, lng);
+				
+				if(marker)
+					marker.setPosition(myLatLng);
+				else
+				{
+					marker = new google.maps.Marker(
+						{
+      							position: myLatLng, 
+      							map: map, 
+							title: playerName + "'s Position"
+						}
+					);
+				}
+			}
+		
+			function submitPoint()
+			{
+				alert("ME");
+				callRPCMethod("addNode", playerId);
+			
+				//display the just submitted points
+				displayPoints(playerId, lastServerPosition[0], lastServerPosition[1]);
+			}
+		
+			function displayPoints(player)
+			{
+				if(!playerLines[player])
+				{
+					var polyLine = new google.maps.Polyline
+					               (
+					               	{
+						       		path:[],
+						       		strokeColor: "green",
+						       		strokeOpacity: 1.0,
+						       		strokeWeight: 2
+						       	}
+						       );
+					polyLine.setMap(map);
+					playerLines[player] = polyLine;
+				}
+				
+				var path = playerLines[player].getPath();
+				
+				for(var i = 1; i < arguments.length; i += 2)
+				{
+					// Because path is an MVCArray, we can simply append a new coordinate
+					// and it will automatically appear
+					var latLng = new google.maps.LatLng(arguments[i], arguments[i + 1]);
+					path.insertAt(path.getLength(), latLng);
+					
+					//make sure map is centered so point is visible
+					fitBounds(latLng);
+				}
+			}
+			
+			function createXml(markup)
+			{
+				var doc;
+
+				if(window.DOMParser)
+				{
+					var parser= new DOMParser();
+					doc = parser.parseFromString(markup, "text/xml");
+				}
+				else
+				{
+					//IE way
+					doc = new ActiveXObject("Microsoft.XMLDOM"); 
+					doc.async = "false";
+					doc.loadXML(markup);
+				}
+				
+				return doc;
+			}
+			
+			function fitBounds(latLng)
+			{
+				bounds.extend(latLng);
+			}
+		
+			function getPoints()
+			{
+				var responseParameters;
+				if(lastServerTime)
+					responseParameters = callRPCMethod("getNodes", playerId, lastServerTime);
+				else
+					responseParameters = callRPCMethod("getNodes", playerId);
+
+				var responseDocument = createXml(responseParameters[0]);
+				
+				var stateElement = responseDocument.getElementsByTagName("state")[0];
+				lastServerTime = parseInt(stateElement.getAttribute("time"));
+			
+				var playerElements = responseDocument.getElementsByTagName("player");
+				var nodeElements;
+				var nodeElement;
+				
+				//process all received player data
+				for(var i = 0; i != playerElements.length; i++)
+				{
+					nodeElements = playerElements[i].getElementsByTagName("node");
+					for(var j = 0; j != nodeElements.length; j++)
+					{
+						nodeElement = nodeElements[j];
+						displayPoints
+						(
+							playerElements[i].getAttribute["id"],
+							parseFloat(nodeElement.getAttribute("lat")),
+							parseFloat(nodeElement.getAttribute("lng"))
+						);
+					}
+				}
+			}
+		
+			function addPlayer(playerName)
+			{
+				if(playerId)
+				{
+					alert("Multiple players not supported by one client");
+					return false;
+				}
+					
+				var parameter = callRPCMethod("addPlayer", playerName);
+				
+				if(parameter.length == 0)
+					return false;
+					
+				playerId = parameter[0];
+				return true;
+			}
+		
+			function removePlayer()
+			{
+				if(!playerId)
+					return; //we don't have logged in player
+				
+				callRPCMethod("removePlayer", playerId);
+			}
+			
+			function test(blub)
+			{
+				alert("ME");
+			}
+		
+			function login()
+			{
+				var location;
+				
+				if(navigator.geolocation)
+				{
+					location = navigator.geolocation;
+					geoImpl = 0;
+				}
+				else
+				{
+					var script = document.createElement("script");
+					script.setAttribute("type", "text/javascript");
+					script.setAttribute("src", "http://code.google.com/apis/gears/gears_init.js");
+					document.getElementsByTagName("head")[0].appendChild(script);
+					location = google.gears.factory.create('beta.geolocation');
+					geoImpl = 1;
+				}
+			
+				location.getCurrentPosition
+				(
+					function(position)
+					{
+						playerName = prompt("Please enter your player's name", "");
+						
+						if(playerName == null)
+							return;
+						
+						if(!addPlayer(playerName))
+						{
+							alert("Login failed");
+							return;
+						}
+						
+						var coords;
+						
+						if(position.coords)
+							coords = position.coords;
+						else
+							coords = position;
+					
+						var myLatLng = new google.maps.LatLng(coords.latitude, coords.longitude);
+					
+						var myOptions =
+						{
+							disableDefaultUI: true,
+							disableDoubleClickZoom: true,
+							keyboardShortcuts: false,
+							scrollwheel: false,
+							mapTypeControl: false,
+							zoom: 3,
+							center: myLatLng,
+							mapTypeId: google.maps.MapTypeId.ROADMAP
+						};
+			
+						map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
+
+						//make sure current position is displayed
+						bounds = new google.maps.LatLngBounds(myLatLng, myLatLng);
+						map.fitBounds(bounds);
+
+						google.maps.event.addListener(map, 'click', submitPoint);
+						watchID = location.watchPosition(submitPosition);
+		
+						//refresh the points every second
+						window.setInterval("getPoints()", 1000);
+					}
+				);  
+			}
+		
+			function logout()
+			{
+				if(watchID && navigator.geolocation)
+					navigator.geolocation.clearWatch(watchID);
+
+				window.clearInterval("getPoints()");
+				removePlayer();
+			}
+			
+		</script>
+		<meta name="viewport" content="initial-scale=1.0, user-scalable=no"/>
+		<style type="text/css">
+			html, body, body div { width:100%; height:100%; padding:0px; margin:0px}
+		</style>
+	</head>
+	<body onload="login()" onunload="logout()">
+		<div id="map_canvas"/>
+	</body>
+</html>
+
