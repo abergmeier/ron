@@ -5,18 +5,14 @@ import java.sql.Statement;
 
 import javax.servlet.http.HttpSession;
 
-import org.sqlite.JDBC;
-
-import com.sun.corba.se.spi.orbutil.fsm.Guard.Result;
-
 public class PlayerDatabase
 extends AbstractDatabase<Player>
 {
 	
-	protected PlayerDatabase()
+	protected PlayerDatabase(HttpSession session)
 	throws SQLException
 	{
-		super();
+		super(session);
 	}
 	
 	protected String getTableName()
@@ -33,7 +29,7 @@ extends AbstractDatabase<Player>
 		
 		if(instance == null)
 		{
-			instance = new PlayerDatabase();
+			instance = new PlayerDatabase(session);
 			session.setAttribute(KEY, instance);
 		}
 	
