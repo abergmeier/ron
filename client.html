@@ -52,13 +52,10 @@
 				return response.params;
 			}
 		
-			function submitPosition(position)
+			function updatePosition(position)
 			{
 				var lat = position.coords.latitude;
 				var lng = position.coords.longitude;
-				callRPCMethod("updatePosition", playerId, lat, lng);
-				lastServerPosition[0] = lat; 
-				lastServerPosition[1] = lng;
 				
 				var myLatLng = new google.maps.LatLng(lat, lng);
 				
@@ -137,11 +134,19 @@
 		
 			function getPoints()
 			{
+				if(!marker)
+					return; //we cannot do anything without a position
+				
+				var position = marker.getPosition();
+
 				var responseParameters;
 				if(lastServerTime)
-					responseParameters = callRPCMethod("getNodes", playerId, lastServerTime);
+					responseParameters = callRPCMethod("update", playerId, position.lat(), position.lng(), lastServerTime);
 				else
-					responseParameters = callRPCMethod("getNodes", playerId);
+					responseParameters = callRPCMethod("update", playerId, position.lat(), position.lng());
+
+				lastServerPosition[0] = position.lat(); 
+				lastServerPosition[1] = position.lng();
 
 				var responseDocument = createXml(responseParameters[0]);
 				
@@ -273,7 +278,7 @@
 						map.fitBounds(bounds);
 
 						google.maps.event.addListener(map, 'click', submitPoint);
-						watchID = location.watchPosition(submitPosition);
+						watchID = location.watchPosition(updatePosition);
 		
 						//refresh the points every second
 						window.setInterval("getPoints()", 1000);
