@@ -5,15 +5,33 @@
 		<script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=true"></script>
 		<script type="text/javascript" src="mimic.js"></script>
 		<script type="text/javascript">
-			//save the unique player id
-			var playerId;
-			var playerName;
-			var playerLines = new Array();
+			var players = new Array();
+			var colors = new Array("black", "blue", "red", "yellow", "green", "cyan");
+
+			var map;
+
+			function Player(player_name, player_id)
+			{
+				this.Name = player_name;
+  				this.ID   = player_id;
+				this.Color = colors[players.length];
+
+				var polyLine = new google.maps.Polyline
+				(
+					{
+				       		path:[],
+				       		strokeColor: this.Color,
+				       		strokeOpacity: 1.0,
+				       		strokeWeight: 2
+				       	}
+				);
+				polyLine.setMap(map);
+				this.Line = polyLine;
+			}	
 		
 			//save the last servertime of a received update
 			var lastServerTime;
 			var lastServerPosition = new Array(0, 0);
-			var map;
 			var marker;
 			var bounds;
 
@@ -48,11 +66,12 @@
 					marker.setPosition(myLatLng);
 				else
 				{
+					var player = getPlayer();
 					marker = new google.maps.Marker(
 						{
       							position: myLatLng, 
       							map: map, 
-							title: playerName + "'s Position"
+							title: player.Name + "'s Position"
 						}
 					);
 				}
@@ -67,24 +86,17 @@
 				displayPoints(playerId, lastServerPosition[0], lastServerPosition[1]);
 			}
 		
-			function displayPoints(player)
+			function displayPoints(player_id)
 			{
-				if(!playerLines[player])
+				var player = players[player_id];
+
+				if(!player)
 				{
-					var polyLine = new google.maps.Polyline
-					               (
-					               	{
-						       		path:[],
-						       		strokeColor: "green",
-						       		strokeOpacity: 1.0,
-						       		strokeWeight: 2
-						       	}
-						       );
-					polyLine.setMap(map);
-					playerLines[player] = polyLine;
+					alert("No player with id");
+					return;
 				}
-				
-				var path = playerLines[player].getPath();
+		
+				var path = player.Line.getPath();
 				
 				for(var i = 1; i < arguments.length; i += 2)
 				{
@@ -156,10 +168,18 @@
 					}
 				}
 			}
+
+			function getPlayer()
+			{
+				if(!players.length)
+					return null;
+
+				return players[0];
+			}
 		
 			function addPlayer(playerName)
 			{
-				if(playerId)
+				if(getPlayer())
 				{
 					alert("Multiple players not supported by one client");
 					return false;
@@ -169,17 +189,21 @@
 				
 				if(parameter.length == 0)
 					return false;
-					
-				playerId = parameter[0];
+				
+				var playerId = parameter[0];
+				var player = new Player(playerName, playerId);
+	
+				players[playerId] = player; //add new player
 				return true;
 			}
 		
 			function removePlayer()
 			{
-				if(!playerId)
+				if(!getPlayer())
 					return; //we don't have logged in player
 				
-				callRPCMethod("removePlayer", playerId);
+				callRPCMethod("removePlayer", getPlayer().ID);
+				players.splice(0, player.length);
 			}
 			
 			function test(blub)
