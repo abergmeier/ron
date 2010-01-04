@@ -1,7 +1,9 @@
-import java.awt.Color;
+package org.ron.test;
+
 import java.awt.Frame;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.Random;
 
 import javax.vecmath.Vector2f;
 
@@ -19,12 +21,15 @@ public class CollisionTest
 			new Vector2f(400, 400),
 			new Vector2f(290, 216)
 		};
+		
+		final int XSIZE = 500;
+		final int YSIZE = 500;		
 
-		Vector2f circle = new Vector2f(250f, 250f);
+		Vector2f circle = new Vector2f(XSIZE / 2f, YSIZE / 2f);
 		final float r = 100f;
 
 		Frame window = new Frame("Collisions");
-		window.setSize(500, 500);
+		window.setSize(XSIZE, YSIZE);
 		window.addWindowListener
 		(
 				new WindowAdapter()
@@ -35,8 +40,23 @@ public class CollisionTest
 			        }
 				}
 		);
-		RadarCanvas canvas = new RadarCanvas(circle, r, nodes);
-		canvas.setBackground(Color.WHITE);
+		RadarCanvas canvas = new RadarCanvas(circle, r);
+		canvas.addPlayer(nodes);
+		
+		final int NODECOUNT = 20;
+		Random randomizer = new Random();
+		for(int i = 0; i != 4; i++)
+		{
+			nodes = new Vector2f[NODECOUNT];
+			
+			for(int j = 0; j != NODECOUNT; j++)
+			{
+				nodes[j] = new Vector2f(randomizer.nextFloat() * XSIZE, randomizer.nextFloat() * YSIZE);
+			}
+			
+			canvas.addPlayer(nodes);
+		}
+		
 		window.add(canvas);
 		window.setVisible(true);
 	}

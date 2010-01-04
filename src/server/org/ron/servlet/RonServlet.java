@@ -1,3 +1,5 @@
+package org.ron.servlet;
+
 import java.sql.SQLException;
 import java.util.Calendar;
 import java.io.IOException;
@@ -5,13 +7,16 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import javax.vecmath.Vector2f;
 
 import org.apache.xmlrpc.webserver.XmlRpcServlet;
 
 public class RonServlet extends XmlRpcServlet
 {
-	//
-	private static final long serialVersionUID = 1L;
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -9076867142926702651L;
 
 	//remember the HttpSession of the current thread
 	private static ThreadLocal<HttpSession> threadSession = new ThreadLocal<HttpSession>();
@@ -55,14 +60,26 @@ public class RonServlet extends XmlRpcServlet
 	throws SQLException
 	{
 		HttpSession session = getHttpSession();
+		PlayerDatabase players = PlayerDatabase.get(session);
+		NodeDatabase nodes = NodeDatabase.get(session);
 		
-		Player player = new Player(playerId, PlayerDatabase.get(session));
+		Player player = new Player(playerId, players);
 		player.setPosition(new Position(lat, lng));
+		
+		//check for collision with node lines
+		for(Player otherPlayer : players)
+		{
+			Vector2f[] playerNodes = nodes.narrow(otherPlayer);
+			for(int i = 1; i < playerNodes.getCount(); i++)
+			{
+				org.ron.Collision.check(playerNodes[i - 1], playerNodes[i]);
+			}
+		}
 		
 		Calendar updateCalendar = Calendar.getInstance();
 		updateCalendar.set(Calendar.SECOND, time);
 		
-		NodeUpdate update = NodeDatabase.get(session).getNew(player, updateCalendar);
+		NodeUpdate update = nodes.getNew(player, updateCalendar);
 		
 		String output = "<state time=\"" + update.getTime() + "\"/>";
 		

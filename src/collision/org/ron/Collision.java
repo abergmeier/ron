@@ -1,7 +1,8 @@
+package org.ron;
 
 import javax.vecmath.Vector2f;
 
-class Radar
+public class Collision
 {
 	private static Vector2f[] buffers = new Vector2f[]{new Vector2f(), new Vector2f()};
 	
@@ -14,19 +15,13 @@ class Radar
 		{
 			_mid = mid;
 			
-			_result[0] = new Vector2f(A);
-			_result[0].sub(_mid);
-			_result[1] = new Vector2f(B);
-			_result[1].sub(_mid);
-			
-			//make sure the order is negative to positive
-			if(_result[0].getX() > _result[1].getX())
-			{
-				//switch
-				Vector2f reference = _result[0];
-				_result[0] = _result[1];
-				_result[1] = reference;
-			}
+			vector = new Vector2f(A);
+			vector.sub(_mid);
+			_result.add(vector);
+
+			vector = new Vector2f(B);
+			vector.sub(_mid);
+			_result.add(vector);
 		}
 		
 		public void add(Vector2f entry)
@@ -35,15 +30,7 @@ class Radar
 			
 			try
 			{
-				int index;
-				
-				if(entry.getX() < 0)
-					index = 0;
-				else
-					index = 1;
-				
-				if(entry.length() < _result[index].length())
-					_result[index].set(entry);
+				_result.add(new Vector2f(entry));
 			}
 			finally
 			{
@@ -54,9 +41,16 @@ class Radar
 		
 		public Vector2f[] getAll()
 		{
-			_result[0].add(_mid);
-			_result[1].add(_mid);
-			return _result;
+			Vector2f[] all = new Vector2f[]();
+			
+			 
+			for(int i = 0, Vector2f vector = _result[i]; i < _result.length; _result++)
+			{
+				all[i] = new Vector2f(_result[i]);
+				all[i].add(_mid);
+			}
+
+			return all;
 		}
 	}
 	
@@ -146,41 +140,6 @@ class Radar
 		
 		return result.getAll();
 	}
-/*	
-	private static float getY(float x, Vector2f A, Vector2f B)
-	{
-		return B.getY() * (x - A.getX()) / B.getX() + A.getY();
-	}
-	
-	public static Vector2f[] GetIntersections2(Vector2f midCircle, float r, Vector2f A, Vector2f B)
-	{
-		float dx = B.getX() - A.getX();
-		float dy = B.getY() - A.getY();
-		
-		float dr2 = (float)(Math.pow(dx, 2) + Math.pow(dy, 2));
-		float D = A.getX() * B.getY() - B.getX() * A.getY();
-			
-		double squared = Math.pow(r, 2) * dr2 - Math.pow(D, 2);
-		
-		if(squared < 0)
-			return null; //we have no intersection
-		else if(squared == 0)
-			return null; //easier to handle this way
-		
-		float first = D * dy;
-		float second = (float)(Math.abs(dy) * dx * Math.sqrt(squared));
-		
-		float x = (first + second) / dr2;
-		
-		Vector2f[] vectors = new Vector2f[2];
-		vectors[0] = new Vector2f(x, getY(x, A, B));
-		
-		x = (first - second) / dr2;
-		vectors[1] = new Vector2f(x, getY(x, A, B));
-		
-		return vectors;
-	}
-*/
 
 	public static Vector2f[] GetIntersections(Vector2f midCircle, float r, Vector2f A, Vector2f B)
 	{
