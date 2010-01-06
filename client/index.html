@@ -70,7 +70,7 @@
 					lat = position.latitude;
 					lng = position.longitude;
 				}
-				
+
 				var myLatLng = new google.maps.LatLng(lat, lng);
 				
 				if(marker)
@@ -78,6 +78,7 @@
 				else
 				{
 					var player = getPlayer();
+
 					marker = new google.maps.Marker(
 						{
       							position: myLatLng, 
@@ -90,9 +91,11 @@
 		
 			function submitPoint()
 			{
+				if(!marker)
+					return;
+
 				callRPCMethod("addNode", getPlayer().ID);
 
-				alert(lastServerPosition[0] + lastServerPosition[1]);
 				//display the just submitted points
 				displayPoints(playerId, lastServerPosition[0], lastServerPosition[1]);
 			}
@@ -155,9 +158,9 @@
 
 				var responseParameters;
 				if(lastServerTime)
-					responseParameters = callRPCMethod("updateState", playerId, position.lat(), position.lng(), lastServerTime);
+					responseParameters = callRPCMethod("updateState", getPlayer().ID, position.lat(), position.lng(), lastServerTime);
 				else
-					responseParameters = callRPCMethod("updateState", playerId, position.lat(), position.lng());
+					responseParameters = callRPCMethod("updateState", getPlayer().ID, position.lat(), position.lng());
 
 				lastServerPosition[0] = position.lat(); 
 				lastServerPosition[1] = position.lng();
@@ -193,7 +196,7 @@
 				if(!players.length)
 					return null;
 
-				return players[0];
+				return players.slice(0,1);
 			}
 		
 			function addPlayer(playerName, lat, lng)
@@ -205,13 +208,17 @@
 				}
 					
 				var parameter = callRPCMethod("addPlayer", playerName, lat, lng);
-				
+
 				if(parameter.length == 0)
 					return false;
 				
 				var playerId = parameter[0];
+
+				if(playerId == null)
+					return false; //something unexpected went wrong
+									
 				var player = new Player(playerName, playerId);
-	
+
 				players[playerId] = player; //add new player
 				return true;
 			}
@@ -265,6 +272,10 @@
 							alert("Login failed");
 							return;
 						}
+
+						//position data was sent when created player
+						lastServerPosition[0] = coords.latitude;
+						lastServerPosition[1] = coords.longitude;
 					
 						var myLatLng = new google.maps.LatLng(coords.latitude, coords.longitude);
 					
@@ -285,6 +296,8 @@
 						//make sure current position is displayed
 						bounds = new google.maps.LatLngBounds(myLatLng, myLatLng);
 						map.fitBounds(bounds);
+
+						updatePosition(position);
 
 						//not working for some awkward reason
 						//google.maps.event.addListener(map, 'click', submitPoint);
