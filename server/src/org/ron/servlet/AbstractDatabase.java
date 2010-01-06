@@ -22,7 +22,6 @@ implements Collection<Element>
 {
 	final int FIRSTCOLUMN = 1;
 	private java.sql.Connection _connection = null;
-	private ReentrantReadWriteLock _lock = new ReentrantReadWriteLock();
 	
 	protected AbstractDatabase(HttpSession session)
 	throws SQLException, ClassNotFoundException
@@ -34,11 +33,6 @@ implements Collection<Element>
 			createTable();		
 	}
 	
-	protected ReadWriteLock getLock()
-	{
-		return _lock;
-	}
-	
 	private boolean tableExists()
 	throws SQLException
 	{
@@ -47,41 +41,28 @@ implements Collection<Element>
 			"SELECT name from sqlite_master WHERE type = 'table' AND name = ?"
 		);
 		
-		Lock readLock = null;
 		try
 		{
 			statement.setString(1, getTableName());
-			readLock = getLock().readLock();
-			readLock.lock();
 			ResultSet result = statement.executeQuery();
-			return result.next(); //when this succeeds we have at least one row
+			return result.getString(1) != null; //when this succeeds we have at least one row
 		}
 		finally
 		{
-			if(readLock != null)
-				readLock.unlock();
-			
-			statement.close();
+			finallyCloseStatement(statement);
 		}
 	}
 	
 	public int size()
 	{
-		Lock readLock = getLock().readLock();
 		try
 		{
 			return getInt("SELECT COUNT(*) FROM " + getTableName());
 		}
 		catch (SQLException e)
 		{
-			e.printStackTrace();
+			throw wrapInRuntimeException(e);
 		}
-		finally
-		{
-			readLock.unlock();
-		}
-		
-		return 0;
 	}
 	
 	protected java.sql.Connection getConnection()
@@ -124,19 +105,13 @@ implements Collection<Element>
 	{
 		Statement statement = getConnection().createStatement();
 		
-		Lock writeLock = null;
-		
 		try
 		{
-			writeLock = getLock().writeLock();
-			writeLock.lock();
 		    return statement.executeUpdate(sqlCommand);
 		}
 		finally
 		{
-			writeLock.unlock();
-			
-			statement.close();
+			finallyCloseStatement(statement);
 		}
 	}
 	
@@ -144,12 +119,9 @@ implements Collection<Element>
 	throws SQLException
 	{
 		Statement statement = getConnection().createStatement();
-		Lock readLock = null;
 		
 		try
 		{
-			readLock = getLock().readLock();
-			readLock.lock();
 			ResultSet result = statement.executeQuery(sqlCommand);
 			if(!result.next())
 				throw new SQLException();
@@ -157,11 +129,8 @@ implements Collection<Element>
 			return result.getString(FIRSTCOLUMN);
 		}
 		finally
-		{
-			if(readLock != null)
-				readLock.unlock();
-			
-			statement.close();
+		{			
+			finallyCloseStatement(statement);
 		}
 	}
 	
@@ -170,12 +139,8 @@ implements Collection<Element>
 	{
 		Statement statement = getConnection().createStatement();
 		
-		Lock readLock = null;
-		
 		try
 		{
-			readLock = getLock().readLock();
-			readLock.lock();
 			ResultSet result = statement.executeQuery(sqlCommand);
 			if(!result.next())
 				throw new SQLException();
@@ -183,11 +148,8 @@ implements Collection<Element>
 			return result.getInt(FIRSTCOLUMN);
 		}
 		finally
-		{
-			if(readLock != null)
-				readLock.unlock();
-			
-			statement.close();
+		{			
+			finallyCloseStatement(statement);
 		}
 	}
 	
@@ -199,28 +161,17 @@ implements Collection<Element>
 
 	public Object[] toArray()
 	{
-		getLock().readLock().lock();
+		int size = size();
 		
-		try
-		{
-			int size = size();
-		
-			Object[] result = new Object[size];
+		Object[] result = new Object[size];
 			
-			toArray(result);
+		toArray(result);
 			
-			return result;
-		}
-		finally
-		{
-			getLock().readLock().unlock();
-		}
+		return result;
 	}
 	
 	public Iterator<Element> iterator()
 	{
-		getLock().readLock().lock();
-		
 		ResultSet result = null; 
 		
 		try
@@ -237,55 +188,75 @@ implements Collection<Element>
 		}
 		catch (SQLException e)
 		{
-			e.printStackTrace();
+			throw wrapInRuntimeException(e);
 		}
 		finally
 		{
-			getLock().readLock().unlock();
-			
-			if(result != null)
-				try
-				{
-					result.getStatement().close();
-				}
-				catch (SQLException e)
-				{
-					e.printStackTrace();
-				}
+			finallyCloseStatement(result);
 		}
-		
-		return null;
 	}
 	
 	public <T> T[] toArray(T[] array)
 	{
-		getLock().readLock().lock();
+		int size = size(); 
+		if (array.length < size) 
+			array = (T[])java.lang.reflect.Array.newInstance(array.getClass().getComponentType(), size); 
+		  
+		Iterator<Element> it = iterator(); 
+		
+		for(int i = 0; i != size; i++)
+			array[i] = (T)it.next();
+		
+		if (array.length > size) array[size] = null; 
+			return array; 
+	}
 	
+	protected void finallyCloseStatement(Statement statement)
+	{
+		if(statement == null)
+			return;
+		
 		try
 		{
-			int size = size(); 
-			if (array.length < size) 
-				array = (T[])java.lang.reflect.Array.newInstance(array.getClass().getComponentType(), size); 
-			  
-			Iterator<Element> it = iterator(); 
-			
-			for(int i = 0; i != size; i++)
-				array[i] = (T)it.next();
-			
-			  if (array.length > size) array[size] = null; 
-			  return array; 
+			statement.close();
 		}
-		finally
+		catch (SQLException e)
 		{
-			getLock().readLock().unlock();
+			//suppress throwing
+			e.printStackTrace();
 		}
-	}	
+	}
 	
-	protected NullPointerException wrapInNullException(Exception cause)
+	protected void finallyCloseStatement(ResultSet resultSet)
 	{
-		NullPointerException exception = new NullPointerException();
-		exception.initCause(cause);
-		return exception;
+		if(resultSet == null)
+			return;
+		
+		try
+		{
+			resultSet.getStatement().close();
+		}
+		catch (SQLException e)
+		{
+			//suppress throwing
+			e.printStackTrace();
+		}
+	}
+	
+	protected void finallyCloseStatement(PreparedStatement statement)
+	{
+		if(statement == null)
+			return;
+		
+		try
+		{
+			statement.close();
+		}
+		catch (SQLException e)
+		{
+			//suppress throwing
+			e.printStackTrace();
+		}
 	}
 	
 	protected RuntimeException wrapInRuntimeException(Exception cause)

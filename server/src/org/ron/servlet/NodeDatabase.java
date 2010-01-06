@@ -86,15 +86,11 @@ implements Set<Node>
 			"ORDER BY PLAYERID, " + SQLORDER
 		);
 		
-		Lock readLock = null;
-		
 		try
 		{
 			statement.setInt(1, time.get(Calendar.SECOND));
 			statement.setInt(2, player.getId());
 			
-			readLock = getLock().readLock();
-			readLock.lock();
 			ResultSet result = statement.executeQuery();
 			
 			NodeUpdate update = new NodeUpdate();
@@ -122,10 +118,7 @@ implements Set<Node>
 		}
 		finally
 		{
-			if(readLock != null)
-				readLock.unlock();
-			
-			statement.close();
+			finallyCloseStatement(statement);
 		}		
 	}
 	
@@ -137,7 +130,6 @@ implements Set<Node>
 	public boolean add(Node element)
 	{
 		PreparedStatement statement = null;
-		Lock writeLock = null;
 		
 		try
 		{
@@ -149,9 +141,6 @@ implements Set<Node>
 			statement.setFloat(3, position.getLongtitude());
 			
 			statement.setInt(4, Calendar.getInstance().get(Calendar.SECOND));
-			
-			writeLock = getLock().writeLock();
-			writeLock.lock();
 			statement.execute();
 		}
 		catch (SQLException e)
@@ -160,18 +149,7 @@ implements Set<Node>
 		}
 		finally
 		{
-			if(writeLock != null)
-				writeLock.unlock();
-			
-			if(statement != null)
-				try
-				{
-					statement.close();
-				}
-				catch (SQLException e)
-				{
-					e.printStackTrace();
-				}
+			finallyCloseStatement(statement);
 		}
 		
 		return false;
@@ -237,53 +215,26 @@ implements Set<Node>
 		}
 		finally
 		{
-			result.getStatement().close();
+			finallyCloseStatement(result);
 		}		
 	}
 	
 	protected int getPlayerId(ResultSet result)
 	throws SQLException
 	{
-		getLock().readLock().lock();
-		
-		try
-		{
-			return result.getInt(1);
-		}
-		finally
-		{
-			getLock().readLock().unlock();
-		}
+		return result.getInt(1);
 	}
 	
 	protected float getLatitude(ResultSet result)
 	throws SQLException
 	{
-		getLock().readLock().lock();
-		
-		try
-		{
-			return result.getFloat(2);
-		}
-		finally
-		{
-			getLock().readLock().unlock();
-		}		
+		return result.getFloat(2);
 	}
 	
 	protected float getLongtitude(ResultSet result)
 	throws SQLException
 	{
-		getLock().readLock().lock();
-		
-		try
-		{
-			return result.getFloat(3);
-		}
-		finally
-		{
-			getLock().readLock().unlock();
-		}
+		return result.getFloat(3);
 	}
 	
 	/**
@@ -297,14 +248,21 @@ implements Set<Node>
 	{	
 		Statement statement = getConnection().createStatement();
 		
-		ResultSet result = statement.executeQuery
-		( 
-			"SELECT " + SQLFIELDS + " " +
-			"FROM " + SQLTABLENAME + " " +
-			"ORDER BY " + SQLORDER
-		);
+		try
+		{
+			return statement.executeQuery
+			( 
+				"SELECT " + SQLFIELDS + " " +
+				"FROM " + SQLTABLENAME + " " +
+				"ORDER BY " + SQLORDER
+			);			
+		}
+		catch(SQLException exception)
+		{
+			finallyCloseStatement(statement);
+			throw exception;
+		}
 		
-		return result;
 		//do not close the statement since the ResultSet
 		//has to be accessed outside of method
 	}
@@ -312,14 +270,10 @@ implements Set<Node>
 	public int indexOf(Node node)
 	throws SQLException
 	{
-		getLock().readLock().lock();
-		
-		ResultSet result = null;
+		ResultSet result = getAll();
 		
 		try
 		{
-			result = getAll();
-			 
 			for(int i = 0; result.next(); i++)
 			{
 				if
@@ -341,9 +295,7 @@ implements Set<Node>
 		}
 		finally
 		{
-			getLock().readLock().unlock();
-			if(result != null)
-				result.getStatement().close();
+			finallyCloseStatement(result);
 		}
 	}
 
@@ -399,7 +351,7 @@ implements Set<Node>
 		}
 		catch (SQLException e)
 		{
-			throw wrapInNullException(e);
+			throw wrapInRuntimeException(e);
 		}
 	}
 
@@ -413,14 +365,13 @@ implements Set<Node>
 		}
 		catch (SQLException e)
 		{
-			throw wrapInNullException(e);
+			throw wrapInRuntimeException(e);
 		}
 	}
 	
 	public Node[] toArray(Player player)
 	throws SQLException
 	{
-		getLock().readLock().lock();
 		ResultSet result = null;
 		
 		try
@@ -439,10 +390,7 @@ implements Set<Node>
 		}
 		finally
 		{
-			if(result != null)
-				result.getStatement().close();
-			
-			getLock().readLock().unlock();
+			finallyCloseStatement(result);			
 		}
 	}
 }

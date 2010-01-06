@@ -85,76 +85,45 @@ implements Set<Player>
 				"WHERE ID = " + player.getId()
 			);
 			
-			if(!result.next())
-			{
-				try
-				{
-					statement.close();
-				}
-				catch(SQLException e)
-				{
-					//cannot do more than try
-					//and log
-					e.printStackTrace();
-				}
-				
-				return null;
-			}
-			
-			return result;
+			if(result.next())
+				return result;
 		}
-		catch (SQLException e)
+		catch(SQLException exception)
 		{
-			try
-			{
-				statement.close();
-			}
-			catch(SQLException closE)
-			{
-				//cannot do more than try
-				//and log
-				closE.printStackTrace();
-			}
-			
-			throw e;
-		}
+			finallyCloseStatement(statement);
+			throw exception;
+		}	
+		
+		finallyCloseStatement(statement);
+		throw new RuntimeException("FUCKUP");
 	}
 	
 	public float getLatitude(Player player)
 	throws SQLException
 	{
-		getLock().readLock().lock();
-		ResultSet result = null;
+		ResultSet result = getResultSet(player);
 		try
 		{
-			result = getResultSet(player);
 			return getLatitude(result);
 		}
 		finally
 		{
-			getLock().readLock().unlock();
-			if(result != null)
-				result.getStatement().close();
+			finallyCloseStatement(result);
 		}
 	}
 	
 	public float getLongtitude(Player player)
 	throws SQLException
 	{
-		getLock().readLock().lock();
-		ResultSet result = null;
+		ResultSet result = getResultSet(player);
 		
 		try
 		{
-			result = getResultSet(player);
 			return getLongtitude(result);
 		}
 		finally
 		{
-			getLock().readLock().unlock();
-			
-			if(result != null)
-				result.getStatement().close();
+			finallyCloseStatement(result);
 		}
 	}
 	
@@ -179,12 +148,10 @@ implements Set<Player>
 	public Player get(int playerId)
 	throws SQLException
 	{
-		getLock().readLock().lock();
-		Statement statement = null;
+		Statement statement = getConnection().createStatement();
 		
 		try
 		{
-			statement = getConnection().createStatement();
 			ResultSet result = statement.executeQuery("SELECT " + SQLFIELDS + " FROM " + SQLTABLENAME + " WHERE ID = " + playerId);
 
 			if(!result.next() || result.getString(1) == null)
@@ -194,10 +161,7 @@ implements Set<Player>
 		}
 		finally
 		{
-			getLock().readLock().unlock();
-			
-			if(statement != null)
-				statement.close();
+			finallyCloseStatement(statement);
 		}
 	}
 	
@@ -210,21 +174,15 @@ implements Set<Player>
 	public String getPlayerName(Player player)
 	throws SQLException
 	{
-		getLock().readLock().lock();
-		
-		ResultSet result = null;
+		ResultSet result = getResultSet(player);
 		
 		try
 		{
-			result = getResultSet(player);
 			return getPlayerName(result);
 		}
 		finally
 		{
-			getLock().readLock().unlock();
-			
-			if(result != null)
-				result.close();
+			finallyCloseStatement(result);
 		}
 	}
 
@@ -248,7 +206,7 @@ implements Set<Player>
 		}
 		finally
 		{
-			statement.close();
+			finallyCloseStatement(statement);
 		}		
 	}
 
@@ -360,10 +318,8 @@ implements Set<Player>
 		}
 		catch (SQLException e)
 		{
-			e.printStackTrace();
+			throw wrapInRuntimeException(e);
 		}
-		
-		return false;
 	}
 	
 	protected boolean fromDatabase(Object object)
