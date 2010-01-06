@@ -38,14 +38,17 @@
 			var watchID;
 			
 			var geoImpl; //which interface for location retrieval to use
+			//var ServerUrl = "http://ron.lcid-fire.org/server.php";
+			var serverUrl = "http://localhost:8081/";
 		
 			function callRPCMethod(methodName)
 			{
-				var request = new XmlRpcRequest("http://ron.lcid-fire.org/server.php", methodName);
+				var request = new XmlRpcRequest(serverUrl, "Server." + methodName);
 				for(var i = 1; i < arguments.length; i++)
 				{
 					request.addParam(arguments[i]);
 				}
+
 				var response = request.send();
 				
 				response.parseXML();
@@ -54,8 +57,19 @@
 		
 			function updatePosition(position)
 			{
-				var lat = position.coords.latitude;
-				var lng = position.coords.longitude;
+				var lat;
+				var lng;
+				
+				if(position.coords)
+				{
+					lat = position.coords.latitude;
+					lng = position.coords.longitude;
+				}
+				else
+				{
+					lat = position.latitude;
+					lng = position.longitude;
+				}
 				
 				var myLatLng = new google.maps.LatLng(lat, lng);
 				
@@ -68,7 +82,7 @@
 						{
       							position: myLatLng, 
       							map: map, 
-							title: player.Name + "'s Position"
+								title: player.Name + "'s Position"
 						}
 					);
 				}
@@ -76,9 +90,9 @@
 		
 			function submitPoint()
 			{
-				alert("ME");
-				callRPCMethod("addNode", playerId);
-			
+				callRPCMethod("addNode", getPlayer().ID);
+
+				alert(lastServerPosition[0] + lastServerPosition[1]);
 				//display the just submitted points
 				displayPoints(playerId, lastServerPosition[0], lastServerPosition[1]);
 			}
@@ -141,9 +155,9 @@
 
 				var responseParameters;
 				if(lastServerTime)
-					responseParameters = callRPCMethod("update", playerId, position.lat(), position.lng(), lastServerTime);
+					responseParameters = callRPCMethod("updateState", playerId, position.lat(), position.lng(), lastServerTime);
 				else
-					responseParameters = callRPCMethod("update", playerId, position.lat(), position.lng());
+					responseParameters = callRPCMethod("updateState", playerId, position.lat(), position.lng());
 
 				lastServerPosition[0] = position.lat(); 
 				lastServerPosition[1] = position.lng();
@@ -182,7 +196,7 @@
 				return players[0];
 			}
 		
-			function addPlayer(playerName)
+			function addPlayer(playerName, lat, lng)
 			{
 				if(getPlayer())
 				{
@@ -190,7 +204,7 @@
 					return false;
 				}
 					
-				var parameter = callRPCMethod("addPlayer", playerName);
+				var parameter = callRPCMethod("addPlayer", playerName, lat, lng);
 				
 				if(parameter.length == 0)
 					return false;
@@ -210,12 +224,7 @@
 				callRPCMethod("removePlayer", getPlayer().ID);
 				players.splice(0, player.length);
 			}
-			
-			function test(blub)
-			{
-				alert("ME");
-			}
-		
+
 			function login()
 			{
 				var location;
@@ -243,19 +252,19 @@
 						
 						if(playerName == null)
 							return;
-						
-						if(!addPlayer(playerName))
-						{
-							alert("Login failed");
-							return;
-						}
-						
+
 						var coords;
 						
 						if(position.coords)
 							coords = position.coords;
 						else
 							coords = position;
+
+						if(!addPlayer(playerName, coords.latitude, coords.longitude))
+						{
+							alert("Login failed");
+							return;
+						}
 					
 						var myLatLng = new google.maps.LatLng(coords.latitude, coords.longitude);
 					
@@ -277,11 +286,14 @@
 						bounds = new google.maps.LatLngBounds(myLatLng, myLatLng);
 						map.fitBounds(bounds);
 
-						google.maps.event.addListener(map, 'click', submitPoint);
+						//not working for some awkward reason
+						//google.maps.event.addListener(map, 'click', submitPoint);
 						watchID = location.watchPosition(updatePosition);
 		
 						//refresh the points every second
 						window.setInterval("getPoints()", 1000);
+
+						document.onclick = submitPoint;
 					}
 				);  
 			}

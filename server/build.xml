@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="ron server deploy" default="deploy" basedir=".">
+	<property name="build.collision" value="../collision/build"/>
+	<property name="build" value="build"/>
+	<property name="dist" value="WebContent/WEB-INF/lib"/>
+	
+	<target name="deploy">
+		<jar destfile="${dist}/ron_collision.jar" basedir="${build.collision}/"/>
+		<jar destfile="${dist}/ron_server.jar" basedir="${build}"/>
+		<copy file="/usr/share/java/vecmath.jar" todir="${dist}"/>
+	</target>
+</project>

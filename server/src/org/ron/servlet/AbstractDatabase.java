@@ -1,9 +1,11 @@
+
+	
 package org.ron.servlet;
 
 import java.sql.*;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Iterator;
+import java.util.Collection;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -18,18 +20,17 @@ import javax.servlet.http.HttpSession;
 public abstract class AbstractDatabase<Element>
 implements Collection<Element>
 {
+	final int FIRSTCOLUMN = 1;
 	private java.sql.Connection _connection = null;
 	private ReentrantReadWriteLock _lock = new ReentrantReadWriteLock();
 	
 	protected AbstractDatabase(HttpSession session)
-	throws SQLException
+	throws SQLException, ClassNotFoundException
 	{
 		//make sure we have a connection present
 		retrieveConnection(session);
 		
-		String tableName = getTableName();
-		
-		if(!tableExists(tableName))
+		if(!tableExists())
 			createTable();		
 	}
 	
@@ -38,19 +39,20 @@ implements Collection<Element>
 		return _lock;
 	}
 	
-	private boolean tableExists(String tableName)
+	private boolean tableExists()
 	throws SQLException
 	{
 		PreparedStatement statement = getConnection().prepareStatement
 		(
-			"SELECT name from sqlite_master WHERE type = 'table' AND name = '?'"
+			"SELECT name from sqlite_master WHERE type = 'table' AND name = ?"
 		);
 		
 		Lock readLock = null;
 		try
 		{
-			statement.setString(0, tableName);
+			statement.setString(1, getTableName());
 			readLock = getLock().readLock();
+			readLock.lock();
 			ResultSet result = statement.executeQuery();
 			return result.next(); //when this succeeds we have at least one row
 		}
@@ -72,7 +74,6 @@ implements Collection<Element>
 		}
 		catch (SQLException e)
 		{
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		finally
@@ -89,7 +90,7 @@ implements Collection<Element>
 	}
 	
 	protected java.sql.Connection retrieveConnection(HttpSession session)
-	throws java.sql.SQLException
+	throws java.sql.SQLException, ClassNotFoundException
 	{
 		final String KEY = "DatabaseConnection";
 		
@@ -101,8 +102,16 @@ implements Collection<Element>
 			if(_connection == null)
 			{
 				//open a new connection to database
+				Class.forName("org.sqlite.JDBC");
+				_connection = DriverManager.getConnection("jdbc:sqlite:server.db");
+			    
+/*				
 				org.sqlite.JDBC jdbc = new org.sqlite.JDBC();
 				_connection = jdbc.connect("node.db", null);
+*/				
+				if(_connection == null)
+					throw new NullPointerException("Could not create database");
+				
 				session.setAttribute(KEY, _connection);
 			}
 		}
@@ -120,12 +129,12 @@ implements Collection<Element>
 		try
 		{
 			writeLock = getLock().writeLock();
+			writeLock.lock();
 		    return statement.executeUpdate(sqlCommand);
 		}
 		finally
 		{
-			if(writeLock != null)
-				writeLock.unlock();
+			writeLock.unlock();
 			
 			statement.close();
 		}
@@ -140,11 +149,12 @@ implements Collection<Element>
 		try
 		{
 			readLock = getLock().readLock();
+			readLock.lock();
 			ResultSet result = statement.executeQuery(sqlCommand);
-			if(!result.first())
+			if(!result.next())
 				throw new SQLException();
 			
-			return result.getString(0);
+			return result.getString(FIRSTCOLUMN);
 		}
 		finally
 		{
@@ -165,11 +175,12 @@ implements Collection<Element>
 		try
 		{
 			readLock = getLock().readLock();
+			readLock.lock();
 			ResultSet result = statement.executeQuery(sqlCommand);
-			if(!result.first())
+			if(!result.next())
 				throw new SQLException();
 			
-			return result.getInt(0);
+			return result.getInt(FIRSTCOLUMN);
 		}
 		finally
 		{
@@ -185,8 +196,7 @@ implements Collection<Element>
 	{
 		return execute("DELETE FROM " + getTableName() + " WHERE " + where);
 	}
-	
-	@Override
+
 	public Object[] toArray()
 	{
 		getLock().readLock().lock();
@@ -207,7 +217,6 @@ implements Collection<Element>
 		}
 	}
 	
-	@Override
 	public Iterator<Element> iterator()
 	{
 		getLock().readLock().lock();
@@ -248,7 +257,6 @@ implements Collection<Element>
 		return null;
 	}
 	
-	@Override
 	public <T> T[] toArray(T[] array)
 	{
 		getLock().readLock().lock();
@@ -271,8 +279,7 @@ implements Collection<Element>
 		{
 			getLock().readLock().unlock();
 		}
-	}
-	
+	}	
 	
 	protected NullPointerException wrapInNullException(Exception cause)
 	{
@@ -281,14 +288,55 @@ implements Collection<Element>
 		return exception;
 	}
 	
+	protected RuntimeException wrapInRuntimeException(Exception cause)
+	{
+		return new RuntimeException(cause);
+	}
+	
 	protected abstract ResultSet getAll()
 	throws SQLException;
 	
 	protected abstract Element get(ResultSet result)
 	throws SQLException;
 	
+	protected ResultSet getWhere(String where)
+	throws SQLException
+	{
+		Statement statement = getConnection().createStatement();
+		return statement.executeQuery
+		(
+			"SELECT " + getSQLFields() + " " +
+			"FROM " + getTableName() + " " +
+			"WHERE " + where
+		);
+	}
+	
+	protected abstract String getSQLFields();
+	
 	protected abstract String getTableName();
 	
 	protected abstract void createTable()
 	throws SQLException;
+	
+	public void clear()
+	{
+		try
+		{
+			deleteFromTable("1=1");
+		}
+		catch(SQLException exception)
+		{
+			throw wrapInRuntimeException(exception);
+		}
+	}
+	
+	public boolean remove(Object o)
+	{
+		return remove((Element)o);
+	}
+	
+	public boolean contains(Object arg0)
+	{
+		return contains((Element)arg0);
+	}
 }

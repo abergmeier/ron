@@ -1,21 +1,40 @@
 package org.ron;
 
+import java.util.Comparator;
+import java.util.Iterator;
+import java.util.TreeSet;
+
 import javax.vecmath.Vector2f;
 
 public class Collision
 {
+	private static final float RADIUS = 20;
 	private static Vector2f[] buffers = new Vector2f[]{new Vector2f(), new Vector2f()};
 	
 	private static class Result
 	{
-		private Vector2f[] _result = new Vector2f[2];
+		private static class VectorLengthComparator
+		implements Comparator<Vector2f>
+		{
+			 public int compare(Vector2f o1, Vector2f o2)
+			 {
+				 return (int)(o1.length() - o2.length());
+			 }
+	         
+			 public boolean equals(Object obj)
+			 {
+				 return obj instanceof VectorLengthComparator;
+			 }
+		}
+		
+		private TreeSet<Vector2f> _result = new TreeSet<Vector2f>(new VectorLengthComparator());
 		private Vector2f _mid;
 		
 		public Result(Vector2f mid, Vector2f A, Vector2f B)
 		{
 			_mid = mid;
 			
-			vector = new Vector2f(A);
+			Vector2f vector = new Vector2f(A);
 			vector.sub(_mid);
 			_result.add(vector);
 
@@ -39,18 +58,16 @@ public class Collision
 			}
 		}
 		
-		public Vector2f[] getAll()
+		public Vector2f getFirst()
 		{
-			Vector2f[] all = new Vector2f[]();
-			
-			 
-			for(int i = 0, Vector2f vector = _result[i]; i < _result.length; _result++)
-			{
-				all[i] = new Vector2f(_result[i]);
-				all[i].add(_mid);
-			}
-
-			return all;
+			return _result.first();
+		}
+		
+		public Vector2f getSecond()
+		{
+			Iterator<Vector2f> iterator = _result.iterator();
+			iterator.next();
+			return iterator.next();
 		}
 	}
 	
@@ -58,6 +75,7 @@ public class Collision
 	// segment [A, B]
 	// [P] : Point of collision on segment.
 	private static Vector2f[] CircleSegmentIntersect(Vector2f C, float r, Vector2f A, Vector2f B)
+	throws PositionCollision
 	{
 		Vector2f P;
 		
@@ -107,7 +125,9 @@ public class Collision
 			distance.set(P);
 			distance.sub(C);
 		
-			if(distance.length() > r)
+			if(distance.length() == 0)
+				throw new PositionCollision();
+			else if(distance.length() > r)
 				return null; //not in circle
 			else if(distance.length() == r)
 				return new Vector2f[]{new Vector2f(P)}; //on circle
@@ -138,10 +158,21 @@ public class Collision
 			result.add(intersection);
 		}
 		
-		return result.getAll();
+		return new Vector2f[]{result.getFirst(), result.getSecond()};
+	}
+	
+	public static Vector2f[] GetIntersections(Vector2f midCircle, Vector2f A, Vector2f B)
+	{
+		return GetIntersections(midCircle, RADIUS, A, B);
+	}
+	
+	public static Vector2f[] GetIntersections(float lat, float lng, Vector2f A, Vector2f B)
+	{
+		return GetIntersections(new Vector2f(lat, lng), A, B);
 	}
 
 	public static Vector2f[] GetIntersections(Vector2f midCircle, float r, Vector2f A, Vector2f B)
+	throws PositionCollision
 	{
 		return CircleSegmentIntersect(midCircle, r, A, B);
 	}

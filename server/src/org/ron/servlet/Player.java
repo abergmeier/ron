@@ -9,13 +9,7 @@ implements Position
 	private Integer _id;
 	private PlayerDatabase _database;
 	private String _name;
-	
-	public Player(String name, PlayerDatabase database)
-	{
-		this(database);
-		_name = name;		
-	}
-	
+
 	public Player(int id, PlayerDatabase database)
 	{
 		this(database);
@@ -51,8 +45,18 @@ implements Position
 	{
 		_database.setPosition(this, position);		
 	}
+	
+	public void setPosition(float lat, float lng)
+	throws SQLException
+	{
+		_database.setPosition(this, lat, lng);
+	}
+	
+	public Position getPosition()
+	{
+		return this;
+	}
 
-	@Override
 	public float getLatitude()
 	{
 		
@@ -66,7 +70,6 @@ implements Position
 		}
 	}
 
-	@Override
 	public float getLongtitude()
 	{
 		try
