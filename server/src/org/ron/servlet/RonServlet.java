@@ -173,15 +173,18 @@ extends XmlRpcServlet
 	</params>
 </methodCall>
 <methodResponse>
-	<state time="34343.34" won="false" lost="false">
-	<player id="">
-		<node lat="" lng=""/>
-		<node lat="" lng=""/>
-	</player>
-	<player id="">
-		<node lat="" lng=""/>
-		<node lat="" lng=""/>
-	</player>
+	<state time="34343" won="false" lost="false">
+		<player id="">
+			<node id="" lat="" lng=""/>
+			<node id="" lat="" lng=""/>
+		</player>
+		<player id="">
+			<node id="" lat="" lng=""/>
+			<node id="" lat="" lng=""/>
+			<segment nodeid="" lat="" lng=""/>
+			<segment nodeid="" lat="" lng=""/>
+		</player>
+	</state>
 </methodResponse>
 
 
