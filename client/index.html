@@ -5,10 +5,15 @@
 		<script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=true"></script>
 		<script type="text/javascript" src="mimic.js"></script>
 		<script type="text/javascript">
-			var players = new Array();
+
+			//use object for associative array - works better
+			var players = new Object();
+			players.length = 0;
 			var colors = new Array("black", "blue", "red", "yellow", "green", "cyan");
 
-			var map;
+			var _playerId;
+
+			var _map;
 
 			function Player(player_name, player_id)
 			{
@@ -25,7 +30,7 @@
 				       		strokeWeight: 2
 				       	}
 				);
-				polyLine.setMap(map);
+				polyLine.setMap(_map);
 				this.Line = polyLine;
 			}	
 		
@@ -72,21 +77,22 @@
 				}
 
 				var myLatLng = new google.maps.LatLng(lat, lng);
-				
+
 				if(marker)
 					marker.setPosition(myLatLng);
 				else
 				{
 					var player = getPlayer();
-
-					marker = new google.maps.Marker(
-						{
-      							position: myLatLng, 
-      							map: map, 
-								title: player.Name + "'s Position"
-						}
-					);
+					marker = new google.maps.Marker
+					({
+      						position: myLatLng, 
+      						map: _map, 
+						title: player.Name + "s Position"
+					});
 				}
+
+				//make sure marker is displayed
+				fitBounds(myLatLng);
 			}
 		
 			function submitPoint()
@@ -106,11 +112,11 @@
 
 				if(!player)
 				{
-					alert("No player with id");
+					alert("No player with id" + player_id);
 					return;
 				}
 		
-				var path = player.Line.getPath();
+				var path = player.Lines[].getPath();
 				
 				for(var i = 1; i < arguments.length; i += 2)
 				{
@@ -193,10 +199,10 @@
 
 			function getPlayer()
 			{
-				if(!players.length)
+				if(!_playerId)
 					return null;
 
-				return players.slice(0,1);
+				return players[_playerId];
 			}
 		
 			function addPlayer(playerName, lat, lng)
@@ -220,6 +226,12 @@
 				var player = new Player(playerName, playerId);
 
 				players[playerId] = player; //add new player
+				players.length++;
+
+				//save id of first player
+				if(!_playerId)
+					_playerId = playerId;
+
 				return true;
 			}
 		
@@ -276,7 +288,7 @@
 						//position data was sent when created player
 						lastServerPosition[0] = coords.latitude;
 						lastServerPosition[1] = coords.longitude;
-					
+
 						var myLatLng = new google.maps.LatLng(coords.latitude, coords.longitude);
 					
 						var myOptions =
@@ -291,16 +303,16 @@
 							mapTypeId: google.maps.MapTypeId.ROADMAP
 						};
 			
-						map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
+						_map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
 
 						//make sure current position is displayed
 						bounds = new google.maps.LatLngBounds(myLatLng, myLatLng);
-						map.fitBounds(bounds);
-
+						_map.fitBounds(bounds);
+						
 						updatePosition(position);
 
 						//not working for some awkward reason
-						//google.maps.event.addListener(map, 'click', submitPoint);
+						//google.maps.event.addListener(_map, 'click', submitPoint);
 						watchID = location.watchPosition(updatePosition);
 		
 						//refresh the points every second
