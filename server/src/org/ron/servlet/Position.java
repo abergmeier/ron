@@ -4,5 +4,5 @@ public interface Position
 {
 	public float getLatitude();
 	
-	public float getLongtitude();
+	public float getLongitude();
 }

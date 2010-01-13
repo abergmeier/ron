@@ -1,6 +1,7 @@
 package org.ron.servlet;
 
 import java.sql.SQLException;
+import java.util.Calendar;
 
 
 public class Player
@@ -10,15 +11,19 @@ implements Position
 	private PlayerDatabase _database;
 	private String _name;
 
-	public Player(int id, PlayerDatabase database)
+	public Player(int id, PlayerDatabase players)
 	{
-		this(database);
-		_id = id;		
+		_database = players;
+		_id = id;
 	}
 	
-	private Player(PlayerDatabase database)
+	@Override
+	public boolean equals(Object object)
 	{
-		_database = database;
+		if(!(object instanceof Player))
+			return false;
+		
+		return getId() == ((Player)object).getId();
 	}
 
 	public Integer getId()
@@ -70,15 +75,27 @@ implements Position
 		}
 	}
 
-	public float getLongtitude()
+	public float getLongitude()
 	{
 		try
 		{
-			return _database.getLongtitude(this);
+			return _database.getLongitude(this);
 		}
 		catch (SQLException e)
 		{
 			throw new IllegalStateException(e);
 		}
+	}
+	
+	public Segment[] getSegments(Calendar time)
+	throws SQLException
+	{
+		return _database.getNodes().getSegments().toArray(this, time);
+	}
+	
+	public void getUpdate(ClientWriter writer, Segment[] segments)
+	throws SQLException
+	{
+		_database.getNodes().getSegments().getViews().getUpdate(writer, this, segments);
 	}
 }

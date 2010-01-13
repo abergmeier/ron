@@ -1,13 +1,11 @@
 package org.ron.servlet;
 
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.Collection;
 import java.util.Set;
-
-import javax.servlet.http.HttpSession;
 
 public class PlayerDatabase
 extends AbstractDatabase<Player>
@@ -15,12 +13,19 @@ implements Set<Player>
 {
 	private final String SQLTABLENAME = "PLAYER";
 	private final String SQLFIELDS = "ID,LAT,LNG,NAME";
-	private final String SQLORDER = "ID";
+	private final String SQLORDER = "ID ASC";
+	private NodeDatabase _nodes;
 	
-	protected PlayerDatabase(HttpSession session)
-	throws SQLException, ClassNotFoundException
+	public PlayerDatabase(Connection connection)
+	throws SQLException
 	{
-		super(session);
+		super(connection);
+		_nodes = new NodeDatabase(this);
+	}
+	
+	public NodeDatabase getNodes()
+	{
+		return _nodes;
 	}
 	
 	protected String getSQLFields()
@@ -28,11 +33,16 @@ implements Set<Player>
 		return SQLFIELDS;
 	}
 	
-	protected String getTableName()
+	protected String getSQLTableName()
 	{
 		return SQLTABLENAME;
 	}
 	
+	protected String getSQLOrder()
+	{
+		return SQLORDER;
+	}
+/*	
 	//creates a new database on the session if necessary 
 	public static PlayerDatabase get(HttpSession session)
 	throws SQLException, ClassNotFoundException
@@ -48,6 +58,7 @@ implements Set<Player>
 	
 		return instance;
 	}
+	*/
 	
 	protected void createTable()
 	throws SQLException
@@ -70,30 +81,27 @@ implements Set<Player>
 		return result.getInt(1);
 	}
 	
+	private static final int RESULTSET = getUniqueRandom();
+	
 	protected ResultSet getResultSet(Player player)
 	throws SQLException
 	{
-		Statement statement = getConnection().createStatement();
+		PreparedStatement statement = getPreparedStatement
+		(
+			RESULTSET,
+			"SELECT " + SQLFIELDS + " " +
+			"FROM " + SQLTABLENAME + " " +
+			"WHERE ID = ?"
+		);
 		
 		ResultSet result = null;
-		try
-		{
-			result = statement.executeQuery
-			( 
-				"SELECT " + SQLFIELDS + " " +
-				"FROM " + SQLTABLENAME + " " +
-				"WHERE ID = " + player.getId()
-			);
+
+		statement.setInt(1, player.getId());
+		result = statement.executeQuery();
 			
-			if(result.next())
-				return result;
-		}
-		catch(SQLException exception)
-		{
-			finallyCloseStatement(statement);
-			throw exception;
-		}	
-		
+		if(result.next())
+			return result;
+
 		finallyCloseStatement(statement);
 		throw new RuntimeException("FUCKUP");
 	}
@@ -112,14 +120,14 @@ implements Set<Player>
 		}
 	}
 	
-	public float getLongtitude(Player player)
+	public float getLongitude(Player player)
 	throws SQLException
 	{
 		ResultSet result = getResultSet(player);
 		
 		try
 		{
-			return getLongtitude(result);
+			return getLongitude(result);
 		}
 		finally
 		{
@@ -133,7 +141,7 @@ implements Set<Player>
 		return result.getFloat(1);
 	}
 	
-	protected float getLongtitude(ResultSet result)
+	protected float getLongitude(ResultSet result)
 	throws SQLException
 	{
 		return result.getFloat(2);
@@ -145,14 +153,23 @@ implements Set<Player>
 		return new Player(getPlayerId(result), this);
 	}
 	
+	private static final int SELECTPLAYER = getUniqueRandom(); 
+	
 	public Player get(int playerId)
 	throws SQLException
 	{
-		Statement statement = getConnection().createStatement();
+		PreparedStatement statement = getPreparedStatement
+		(
+			SELECTPLAYER,
+			"SELECT " + SQLFIELDS + " " + 
+			"FROM " + SQLTABLENAME + " " + 
+			"WHERE ID = ?"
+		);
 		
 		try
 		{
-			ResultSet result = statement.executeQuery("SELECT " + SQLFIELDS + " FROM " + SQLTABLENAME + " WHERE ID = " + playerId);
+			statement.setInt(1, playerId);
+			ResultSet result = statement.executeQuery();
 
 			if(!result.next() || result.getString(1) == null)
 				throw new IllegalArgumentException("Id not taken");
@@ -189,13 +206,21 @@ implements Set<Player>
 	public void setPosition(Player player, Position position)
 	throws SQLException
 	{
-		setPosition(player, position.getLatitude(), position.getLongtitude()); 
+		setPosition(player, position.getLatitude(), position.getLongitude()); 
 	}
 	
 	public void setPosition(Player player, float lat, float lng)
 	throws SQLException
 	{
-		PreparedStatement statement = getConnection().prepareStatement("UPDATE PLAYER SET LAT = ?, LNG = ? WHERE ID = ?");
+		final int KEY = getUniqueRandom();
+		
+		PreparedStatement statement = getPreparedStatement
+		(
+			KEY,
+			"UPDATE " + SQLTABLENAME + " " +
+			"SET LAT = ?, LNG = ?" +
+			"WHERE ID = ?"
+		);
 		
 		try
 		{
@@ -223,15 +248,42 @@ implements Set<Player>
 	public Player add(String playerName, float lat, float lng)
 	throws SQLException
 	{
-		execute
-		(
-			"INSERT INTO " + SQLTABLENAME + " " +
-			"(NAME, LAT, LNG) VALUES " +
-			"('" + playerName + "'," + lat + "," + lng + ")"
-		);
+		boolean autoCommit = getConnection().getAutoCommit();
+		getConnection().setAutoCommit(false);
+		boolean commited = false;
+		ResultSet result = null;
 		
-		int id = getInt("SELECT ID FROM PLAYER WHERE NAME = '" + playerName + "'");
-		return new Player(id, this);
+		try
+		{
+			execute
+			(
+				"INSERT INTO " + SQLTABLENAME + " " +
+				"(NAME, LAT, LNG) VALUES " +
+				"('" + playerName + "'," + lat + "," + lng + ")"
+			);
+			
+			int id;
+			
+			try
+			{
+				result = getWhere("WHERE NAME = '" + playerName + "'");
+				id = getPlayerId(result);
+			}
+			finally
+			{
+				finallyCloseStatement(result);
+			}
+			
+			commited = commit();
+			return new Player(id, this);
+		}
+		finally
+		{
+			if(!commited)
+				rollback();
+			
+			getConnection().setAutoCommit(autoCommit);
+		}
 	}
 
 	public boolean addAll(Collection<? extends Player> arg0)
@@ -239,18 +291,26 @@ implements Set<Player>
 		throw new UnsupportedOperationException();
 	}
 	
-	public boolean contains(Player player)
-	throws SQLException
+	public boolean contains(Object object)
 	{
+		Player player = (Player)object;
+		
 		if(player.getId() == null)
 			return false; //needs id to be saved
 		
-		return getString
-		(
-			"SELECT ID " +
-			"FROM " + SQLTABLENAME + " " +
-			"WHERE ID = " + player.getId()
-		) != null;
+		try
+		{
+			return getString
+			(
+				"SELECT ID " +
+				"FROM " + SQLTABLENAME + " " +
+				"WHERE ID = " + player.getId()
+			) != null;
+		}
+		catch (SQLException exception)
+		{
+			throw wrapInRuntimeException(exception);
+		}
 	}
 
 	public boolean containsAll(Collection<?> arg0)
@@ -265,23 +325,16 @@ implements Set<Player>
 		return true;
 	}
 	
-	protected ResultSet getAll()
-	throws SQLException
+	public boolean remove(Object object)
 	{
-		Statement statement = getConnection().createStatement();
-		
-		return statement.executeQuery
-		(
-			"SELECT " + SQLFIELDS + " " +
-			"FROM " + SQLTABLENAME + " " +
-			"ORDER BY " + SQLORDER
-		);
-	}
-	
-	public boolean remove(Player player)
-	throws SQLException
-	{
-		return deleteFromTable("ID = " + player.getId()) > 0;
+		try
+		{
+			return deleteFromTable("ID = " + ((Player)object).getId()) > 0;
+		}
+		catch(SQLException exception)
+		{
+			throw wrapInRuntimeException(exception);
+		}
 	}
 	
 	public boolean removeAll(Collection<?> arg0)
@@ -313,7 +366,7 @@ implements Set<Player>
 			
 		try
 		{
-			int changes = execute("DELETE FROM " + getTableName() + " WHERE ID NOT LIKE (" + playerIds + ")");
+			int changes = execute("DELETE FROM " + SQLTABLENAME + " WHERE ID NOT LIKE (" + playerIds + ")");
 			return changes > 0;
 		}
 		catch (SQLException e)

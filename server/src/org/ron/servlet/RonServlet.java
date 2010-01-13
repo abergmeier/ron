@@ -1,6 +1,7 @@
 package org.ron.servlet;
 
 import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Savepoint;
 import java.util.Calendar;
@@ -8,9 +9,12 @@ import java.io.IOException;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-import javax.vecmath.Vector2f;
 
+import org.apache.commons.dbcp.DriverManagerConnectionFactory;
+import org.apache.commons.dbcp.PoolableConnectionFactory;
+import org.apache.commons.dbcp.PoolingDriver;
+import org.apache.commons.pool.impl.GenericObjectPool;
+import org.apache.commons.pool.impl.StackKeyedObjectPoolFactory;
 import org.apache.xmlrpc.webserver.XmlRpcServlet;
 
 public class RonServlet
@@ -20,7 +24,51 @@ extends XmlRpcServlet
 	 * 
 	 */
 	private static final long serialVersionUID = -9076867142926702651L;
-
+	
+	private GenericObjectPool _pool = null;
+	private PoolableConnectionFactory _factory = null;
+	private final String DRIVERKEY = "SQLITEDRIVER";
+	
+	private PlayerDatabase _players = null;
+	
+	@Override
+	public void init(javax.servlet.ServletConfig config)
+	throws ServletException
+	{
+		super.init(config);
+		
+		//see whether a factory already exists
+		_pool = new GenericObjectPool();
+					
+		_factory = new PoolableConnectionFactory
+		(
+			new DriverManagerConnectionFactory("jdbc:sqlite:server.db", null),
+			_pool,
+			new StackKeyedObjectPoolFactory(),
+			null, //validationQuery
+			false,
+			true
+		);
+			
+		PoolingDriver driver = new PoolingDriver();
+		driver.registerPool(DRIVERKEY, _pool);
+	}
+	
+	@Override
+	public void destroy()
+	{
+		super.destroy();
+		
+		try
+		{
+			_pool.close();
+		}
+		catch(Exception exception)
+		{
+			exception.printStackTrace();
+		}
+	}
+/*	
 	//remember the HttpSession of the current thread
 	private static ThreadLocal<HttpSession> threadSession = new ThreadLocal<HttpSession>();
 	
@@ -34,110 +82,142 @@ extends XmlRpcServlet
 	{
 		threadSession.set(value);
 	}
+*/
+	
+	protected Connection getConnection()
+	throws ClassNotFoundException, SQLException
+	{
+		Class.forName("org.sqlite.JDBC");
+	
+		Connection connection = DriverManager.getConnection("jdbc:apache:commons:dbcp:" + DRIVERKEY);
+		connection.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
+	
+		if(connection == null)
+			throw new NullPointerException("Could not create database");
+		
+		return connection;
+	}
 
 	//workaround since the Request object is not accessible in the handlers
 	//so remember it beforehand for each Post
 	public void doPost(HttpServletRequest request, HttpServletResponse response)
 	throws IOException, ServletException
 	{
+		/*
         	setHttpSession(request.getSession());
+        	*/
+        	
+        	Connection connection;
+			try
+			{
+				connection = getConnection();
+        	
+	        	if(_players == null)
+		        	_players = new PlayerDatabase(connection);
+	        	else
+	        		_players.setConnection(connection);
+			}
+			catch (SQLException exception)
+			{
+				throw new ServletException(exception);
+			}
+			catch (ClassNotFoundException exception)
+			{
+				throw new ServletException(exception);
+			}
+    		
 	        super.doPost(request, response);
+	            
+	        try
+	        {
+		        //clear connection again
+		        _players.setConnection(null);
+				connection.close();
+			}
+	        catch (SQLException exception)
+	        {
+	        	throw new ServletException(exception);
+			}
+	        
 	}
 	
 	public void addNode(int playerId)
 	throws SQLException, ClassNotFoundException
 	{
-		HttpSession session = getHttpSession();
-		PlayerDatabase players = PlayerDatabase.get(session);
-		Player player = players.get(playerId);
-		NodeDatabase.get(session).add(player, player.getLatitude(), player.getLongtitude());
+		Player player = _players.get(playerId);
+		_players.getNodes().addForPlayerPosition(player);
 	}
 	
 	public void removeNode(double lat, double lng)
 	throws SQLException, ClassNotFoundException
 	{
-		HttpSession session = getHttpSession();
-		NodeDatabase _database = NodeDatabase.get(session);
+		NodeDatabase _database = _players.getNodes();
 		_database.remove(_database.get((float)lat, (float)lng));
 	}
 	
 	public String updateState(int playerId, double lat, double lng, int time)
 	throws SQLException, ClassNotFoundException
-	{
-		HttpSession session = getHttpSession();
-		PlayerDatabase players = PlayerDatabase.get(session);
-		NodeDatabase nodes = NodeDatabase.get(session);
+	{		
+		Player player = _players.get(playerId);
 		
-		Player player = new Player(playerId, players);
+		//before anything else update position
 		player.setPosition((float)lat, (float)lng);
 		
-		Calendar updateCalendar = Calendar.getInstance();
+		final Calendar updateCalendar = Calendar.getInstance();
 		updateCalendar.set(Calendar.SECOND, time);
 		
-		NodeUpdate update = nodes.getNew(player, updateCalendar);
+		ClientWriter writer = new ClientWriter();
 		
-		String output = "<state time=\"" + update.getTime();
+		Calendar newUpdateTime = updateCalendar;
 		
-		Vector2f[] intersections = null;
+		Segment[] segments;
 		
-		Position currentPosition = player.getPosition();
-		
-		String playerString = "";
-		try
+		for(Player otherPlayer : _players)
 		{
-			//check for collision with node lines
-			for(Player currentPlayer : players)
+			if(otherPlayer.equals(player))
+				continue; //we already have all data of current player on device
+		
+			segments = otherPlayer.getSegments(updateCalendar);
+			
+			for(Segment segment : segments)
 			{
-				playerString += "<player id=\"" + currentPlayer.getId() + "\">";
+				if(newUpdateTime.after(segment.getTime()))
+					continue; //update is already "older"
 				
-				Node[] playerNodes = nodes.toArray(currentPlayer);
-				for(int i = 1; i < playerNodes.length; i++)
-				{
-					intersections = org.ron.Collision.GetIntersections(currentPosition.getLatitude(), currentPosition.getLongtitude(), playerNodes[i - 1], playerNodes[i]);
-					playerString +=
-						"<segment " +
-							"lat=\"" + intersections[0] + "\" " +
-							"lng=\"" + intersections[1] + "\"" +
-						"/>";
-				}
-				playerString += "</player>";
+				newUpdateTime = segment.getTime();
 			}
-		}
-		catch(org.ron.PositionCollision exception)
-		{
-			output += " lost=\"true\""; 
+			
+			player.getUpdate(writer, segments);
 		}
 		
-		output += "\"/>" + playerString;
+		return
+			"<state time=\"" + newUpdateTime.get(Calendar.SECOND) + "\">\n" +
+				writer.close() +
+			"</state>";
 		
-		return output;
 	}
 
 	public int addPlayer(String name, double latitude, double longitude)
 	throws SQLException, ClassNotFoundException
 	{
-		HttpSession session = getHttpSession();
-		Player newPlayer = PlayerDatabase.get(session).add(name, (float)latitude, (float)longitude);
+		Player newPlayer = _players.add(name, (float)latitude, (float)longitude);
 		return newPlayer.getId();
 	}
 	
 	public void removePlayer(int playerId)
 	throws SQLException, ClassNotFoundException
 	{
-		HttpSession session = getHttpSession();
-		PlayerDatabase database = PlayerDatabase.get(session);
-		
 		Savepoint save = null;
 		Connection connection = null;
 		
 		try
 		{
-			connection = database.getConnection();
+			connection = _players.getConnection();
 			save = connection.setSavepoint();
 		
 			//first remove all nodes of the player
-			NodeDatabase.get(session).clear();
-			database.remove(database.get(playerId));
+			_players.getNodes().clear();
+			_players.remove(_players.get(playerId));
 		}
 		catch(Exception exception)
 		{
@@ -175,14 +255,14 @@ extends XmlRpcServlet
 <methodResponse>
 	<state time="34343" won="false" lost="false">
 		<player id="">
-			<node id="" lat="" lng=""/>
-			<node id="" lat="" lng=""/>
-		</player>
-		<player id="">
-			<node id="" lat="" lng=""/>
-			<node id="" lat="" lng=""/>
-			<segment nodeid="" lat="" lng=""/>
-			<segment nodeid="" lat="" lng=""/>
+			<segment id="1">
+				<start lat="343.343" lng="3434.343"/>
+				<end lat="434.3434" lng="3434.343"/>
+			</segment>
+			<partial id="2">
+			 	<start lat="4343.343" lng="3434.343"/>
+			 	<end lat="4343.343" lng="23343.343"/>
+			 </partial>
 		</player>
 	</state>
 </methodResponse>

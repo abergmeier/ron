@@ -58,23 +58,25 @@ public class Collision
 			}
 		}
 		
-		public Vector2f getFirst()
+		public void getFirst(Vector2f vector)
 		{
-			return _result.first();
+			vector.set(_result.first());
+			vector.add(_mid);
 		}
 		
-		public Vector2f getSecond()
+		public void getSecond(Vector2f vector)
 		{
 			Iterator<Vector2f> iterator = _result.iterator();
 			iterator.next();
-			return iterator.next();
+			vector.set(iterator.next());
+			vector.add(_mid);
 		}
 	}
 	
 	//circle : [C, r]
 	// segment [A, B]
 	// [P] : Point of collision on segment.
-	private static Vector2f[] CircleSegmentIntersect(Vector2f C, float r, Vector2f A, Vector2f B)
+	private static boolean CircleSegmentIntersect(Vector2f C, float r, Vector2f A, Vector2f B, Vector2f[] colResult)
 	throws PositionCollision
 	{
 		Vector2f P;
@@ -128,9 +130,14 @@ public class Collision
 			if(distance.length() == 0)
 				throw new PositionCollision();
 			else if(distance.length() > r)
-				return null; //not in circle
+				return false; //not in circle
 			else if(distance.length() == r)
-				return new Vector2f[]{new Vector2f(P)}; //on circle
+			{
+				//right on circle
+				colResult[0].set(P); 
+				colResult[1].set(P);
+				return true;
+			}
 		
 			//we have to calculate the 2 points within
 			//the circle
@@ -158,22 +165,24 @@ public class Collision
 			result.add(intersection);
 		}
 		
-		return new Vector2f[]{result.getFirst(), result.getSecond()};
+		result.getFirst(colResult[0]);
+		result.getSecond(colResult[1]);
+		return true;
 	}
 	
-	public static Vector2f[] GetIntersections(Vector2f midCircle, Vector2f A, Vector2f B)
+	public static boolean GetIntersections(Vector2f midCircle, Vector2f A, Vector2f B, Vector2f[] colResult)
 	{
-		return GetIntersections(midCircle, RADIUS, A, B);
+		return GetIntersections(midCircle, RADIUS, A, B, colResult);
 	}
 	
-	public static Vector2f[] GetIntersections(float lat, float lng, Vector2f A, Vector2f B)
+	public static boolean GetIntersections(float lat, float lng, Vector2f A, Vector2f B, Vector2f[] colResult)
 	{
-		return GetIntersections(new Vector2f(lat, lng), A, B);
+		return GetIntersections(new Vector2f(lat, lng), A, B, colResult);
 	}
 
-	public static Vector2f[] GetIntersections(Vector2f midCircle, float r, Vector2f A, Vector2f B)
+	public static boolean GetIntersections(Vector2f midCircle, float r, Vector2f A, Vector2f B, Vector2f[] colResult)
 	throws PositionCollision
 	{
-		return CircleSegmentIntersect(midCircle, r, A, B);
+		return CircleSegmentIntersect(midCircle, r, A, B, colResult);
 	}
 }

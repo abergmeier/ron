@@ -25,7 +25,7 @@ implements Position
 		return getX();
 	}
 	
-	public float getLongtitude()
+	public float getLongitude()
 	{
 		return getY();
 	}

@@ -68,6 +68,9 @@ extends Canvas
 		float s = 1f;
 		float b = 1f;
 		Color foregroundColor;
+		
+		Vector2f[] intersections = new Vector2f[]{new Vector2f(), new Vector2f()};
+		
 		for(Vector2f[] nodes : _nodes)
 		{
 			for(int i = 1; i != nodes.length; i++)
@@ -77,12 +80,12 @@ extends Canvas
 				drawLine(graphic, nodes[i - 1], nodes[i]); 
 					
 				times[0] = System.nanoTime();
-				Vector2f[] intersections = Collision.GetIntersections(_circle, _r, nodes[i - 1], nodes[i]);
+				boolean succeeded = Collision.GetIntersections(_circle, _r, nodes[i - 1], nodes[i], intersections);
 				times[0] = System.nanoTime() - times[0];
 				calcTime += times[0]; 
 		
-				if(intersections == null)
-					continue;
+				if(!succeeded)
+					continue; //found no intersections
 						
 				for(Vector2f intersection : intersections)
 				{

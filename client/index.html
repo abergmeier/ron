@@ -7,31 +7,112 @@
 		<script type="text/javascript">
 
 			//use object for associative array - works better
-			var players = new Object();
-			players.length = 0;
+			var _players = new Object();
+			_players.length = 0;
 			var colors = new Array("black", "blue", "red", "yellow", "green", "cyan");
 
 			var _playerId;
 
 			var _map;
 
+			function Line(player)
+			{
+				this.Player = player;
+				this.Partials = new Array();
+				this.PolyLine = null;
+
+				function removePartials()
+				{
+					//remove all polylines
+					var last;
+					while(last = this.Partials.pop())
+					{
+						last.setMap(null);
+					}
+
+					//we no longer need the array
+					this.Partials = null;
+				}
+
+				function set(startLat, startLng, endLat, endLng)
+				{
+					var start = new google.maps.LatLng(startLat, startLng);
+					var end = new google.maps.LatLng(endLat, endLng);
+					
+					this.PolyLine = new google.maps.Polyline
+					(
+						{
+				       		path:[start, end],
+				       		strokeColor: this.Player.Color,
+				       		strokeOpacity: 1.0,
+				       		strokeWeight: 2
+						}
+					);
+					this.PolyLine.setMap(_map);
+
+					removePartials();
+				}
+
+				function setPartial(startLat, startLng, endLat, endLng)
+				{
+					if(!isPartial())
+						return; //we already have the whole line
+
+					var start = new google.maps.LatLng(startLat, startLng);
+					var end = new google.maps.LatLng(endLat, endLng);
+						
+					var polyLine = new google.maps.Polyline
+					(
+						{
+				       		path:[start, end],
+				       		strokeColor: this.Player.Color,
+				       		strokeOpacity: 1.0,
+				       		strokeWeight: 2
+				       	}
+					);
+					polyline.setMap(_map);
+					this.Partials.push(polyline);
+				}
+
+				function isPartial()
+				{
+					return this.PolyLine == null;
+				}
+			}
+
 			function Player(player_name, player_id)
 			{
 				this.Name = player_name;
   				this.ID   = player_id;
-				this.Color = colors[players.length];
+				this.Color = colors[_players.length];
 
-				var polyLine = new google.maps.Polyline
-				(
+				this.Lines = new Object();
+
+				function getLine(segmentId)
+				{
+					var line = this.Lines[segmentId];
+
+					//no line yet - create new one
+					if(!line)
 					{
-				       		path:[],
-				       		strokeColor: this.Color,
-				       		strokeOpacity: 1.0,
-				       		strokeWeight: 2
-				       	}
-				);
-				polyLine.setMap(_map);
-				this.Line = polyLine;
+						line = new Line(this);
+						this.Lines[segmentId] = line;
+					}
+
+					return line;
+				}
+				
+				function addLine(segmentId, startLat, startLng, endLat, endLng)
+				{
+					var line = getLine(segmentId);
+					line.set(startLat, startLng, endLat, endLng);						
+				} 
+
+				function addPartialLine(segmentId, startLat, startLng, endLat, endLng)
+				{
+					var line = getLine(segmentId);
+					line.addPartial(startLat, startLng, endLat, endLng);
+				}
 			}	
 		
 			//save the last servertime of a received update
@@ -108,7 +189,7 @@
 		
 			function displayPoints(player_id)
 			{
-				var player = players[player_id];
+				var player = _players[player_id];
 
 				if(!player)
 				{
@@ -154,6 +235,59 @@
 			{
 				bounds.extend(latLng);
 			}
+
+			function callForAll(player, elements, callback)
+			{
+				var rootElement;
+				var rootElementId;
+				var start;
+				var end;
+				
+				for(var i = 0; i != collection.length; i++)
+				{
+					rootElement = elements[i];
+					rootElementId = rootElement.getAttribute("id");
+	
+					start = rootElement.getElementsByTagName("start")[0];
+					end = rootElement.getElementsByTagName("end")[0];
+
+					callback
+					(
+						player,
+						rootElementId,
+						parseFloat(start.getAttribute("lat")),
+						parseFloat(start.getAttribute("lng")),
+						parseFloat(end.getAttribute("lat")),
+						parseFloat(end.getAttribute("lng"))
+					);
+				}
+			}
+
+			function addLine(player, elementId, startLat, startLng, endLat, endLng)
+			{
+				player.addLine(segmentId, startLat, startLng, endLat, endLng);	
+				
+				displayPoints
+				(
+					player,
+					segmentId,
+					lat,
+					lng
+				);
+			}
+
+			function addPartialLine(player, elementId, startLat, startLng, endLat, endLng)
+			{
+				player.addPartialLine(segmentId, startLat, startLng, endLat, endLng);	
+				
+				displayPoints
+				(
+					player,
+					segmentId,
+					lat,
+					lng
+				);
+			}				
 		
 			function getPoints()
 			{
@@ -177,23 +311,21 @@
 				lastServerTime = parseInt(stateElement.getAttribute("time"));
 			
 				var playerElements = responseDocument.getElementsByTagName("player");
-				var nodeElements;
-				var nodeElement;
-				
+				var id;
+				var player;
+							
 				//process all received player data
 				for(var i = 0; i != playerElements.length; i++)
 				{
-					nodeElements = playerElements[i].getElementsByTagName("node");
-					for(var j = 0; j != nodeElements.length; j++)
-					{
-						nodeElement = nodeElements[j];
-						displayPoints
-						(
-							playerElements[i].getAttribute["id"],
-							parseFloat(nodeElement.getAttribute("lat")),
-							parseFloat(nodeElement.getAttribute("lng"))
-						);
-					}
+					id = playerElements[i].getAttribute("id");
+
+					player = _players[id];
+
+					//process whole segments
+					callForAll(player, playerElements[i].getElementsByTagName("segment"), addLine);
+
+					//process partial segments
+					callForAll(player, playerElements[i].getElementsByTagName("partial"), addPartialLine);
 				}
 			}
 
@@ -202,7 +334,7 @@
 				if(!_playerId)
 					return null;
 
-				return players[_playerId];
+				return _players[_playerId];
 			}
 		
 			function addPlayer(playerName, lat, lng)
@@ -225,8 +357,8 @@
 									
 				var player = new Player(playerName, playerId);
 
-				players[playerId] = player; //add new player
-				players.length++;
+				_players[playerId] = player; //add new player
+				_players.length++;
 
 				//save id of first player
 				if(!_playerId)
@@ -241,7 +373,7 @@
 					return; //we don't have logged in player
 				
 				callRPCMethod("removePlayer", getPlayer().ID);
-				players.splice(0, player.length);
+				_players.splice(0, player.length);
 			}
 
 			function login()

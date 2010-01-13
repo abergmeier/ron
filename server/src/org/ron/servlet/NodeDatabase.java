@@ -3,46 +3,33 @@ package org.ron.servlet;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
-import java.util.concurrent.locks.Lock;
-
-import javax.servlet.http.HttpSession;
 
 public class NodeDatabase
 extends AbstractDatabase<Node>
 implements Set<Node>
 {
-	private final String SQLTABLENAME = "NODE";
-	private final String SQLFIELDS = "PLAYERID,LAT,LNG,TIME";
-	private final String SQLORDER = "TIME ASC";
+	private static final String SQLTABLENAME = "NODE";
+	private static final String SQLFIELDS = "PLAYERID,LAT,LNG,TIME";
+	private static final String SQLORDER = "TIME ASC";
 	
 	private PlayerDatabase _players;
+	private SegmentDatabase _segments;
 	
-	protected NodeDatabase(HttpSession session, PlayerDatabase players)
-	throws SQLException, ClassNotFoundException
+	public NodeDatabase(PlayerDatabase players)
+	throws SQLException
 	{
-		super(session);
-		_players = players;		
+		super(players.getConnection());
+		_players = players;
+		_segments = new SegmentDatabase(this);
 	}
 	
-	public static NodeDatabase get(HttpSession session)
-	throws SQLException, ClassNotFoundException
-	{	
-		final String KEY = "NodeDatabase";
-		
-		NodeDatabase instance = (NodeDatabase)session.getAttribute(KEY);
-		
-		if(instance == null)
-		{
-			instance = new NodeDatabase(session, PlayerDatabase.get(session));
-			session.setAttribute(KEY, instance);
-		}
-		
-		return instance;
+	public SegmentDatabase getSegments()
+	{
+		return _segments;
 	}
 	
 	protected String getSQLFields()
@@ -50,9 +37,14 @@ implements Set<Node>
 		return SQLFIELDS;
 	}
 	
-	protected String getTableName()
+	protected String getSQLTableName()
 	{
 		return SQLTABLENAME;
+	}
+	
+	protected String getSQLOrder()
+	{
+		return SQLORDER;
 	}
 	
 	protected void createTable()
@@ -61,98 +53,108 @@ implements Set<Node>
 		execute
 		(
 				"BEGIN;" +
-				"CREATE TABLE \"" + SQLTABLENAME + "\" " +
+				"CREATE TABLE " + SQLTABLENAME + " " +
 				"(" +
-					"\"PLAYERID\" INTEGER NOT NULL, " +
-					"\"LAT\" REAL NOT NULL, " +
-					"\"LNG\" REAL NOT NULL, " +
-					"\"TIME\" INTEGER NOT NULL" +
+					"PLAYERID INTEGER NOT NULL, " +
+					"LAT REAL NOT NULL, " +
+					"LNG REAL NOT NULL, " +
+					"TIME INTEGER NOT NULL" +
 				");" +
 				"CREATE UNIQUE INDEX \"position-index\" on node (LAT ASC, LNG ASC);" +
 				"COMMIT;"
 		);
-	}
+	}	
 	
-	public NodeUpdate getNew(Player player, Calendar time)
-	throws SQLException
+	@Override
+	public boolean add(Node element)
 	{
-		PreparedStatement statement = getConnection().prepareStatement
-		(
-			"SELECT " + SQLFIELDS + " " +				
-			"FROM " + SQLTABLENAME + " " +
-			"WHERE " +
-				"TIME >= ? " +
-			 	"AND PLAYERID <> ?" +
-			"ORDER BY PLAYERID, " + SQLORDER
-		);
-		
-		try
-		{
-			statement.setInt(1, time.get(Calendar.SECOND));
-			statement.setInt(2, player.getId());
-			
-			ResultSet result = statement.executeQuery();
-			
-			NodeUpdate update = new NodeUpdate();
-			NodeUpdate.PlayerNodes playerNodes = null;
-			
-			int lastPlayerId = Integer.MIN_VALUE;
-			int playerId;
-			
-			Position position;
-			for(result.next(), update.setTime(result.getInt(4)); result.next();)
-			{
-				playerId = getPlayerId(result);
-				
-				if(lastPlayerId != playerId)
-				{
-					lastPlayerId = playerId;
-					playerNodes = update.newPlayer(playerId);
-				}
-				
-				position = get(result);
-				playerNodes.addNode(position);			
-			}
-			
-			return update;
-		}
-		finally
-		{
-			finallyCloseStatement(statement);
-		}		
-	}
-	
-	public boolean add(Player player, float lat, float lng)
-	{
-		return add(new Node(player, lat, lng));
+		throw new UnsupportedOperationException("Node cannot be added"); 
 	}
 
-	public boolean add(Node element)
+	private static final int PS_INSERTKEY = getUniqueRandom();
+	private static final int PS_INSERTSELECTKEY = getUniqueRandom();
+	
+	public boolean addForPlayerPosition(Player player)
+	throws SQLException
 	{
 		PreparedStatement statement = null;
 		
+		boolean autoCommit = getConnection().getAutoCommit();
+		getConnection().setAutoCommit(false);
+		boolean commited = false;
+		
 		try
 		{
-			Player player = element.getPlayer();
-			statement = getConnection().prepareStatement("INSERT INTO " + SQLTABLENAME + " (PLAYERID, LAT, LNG, TIME) VALUES (?, ?, ? , ?)");
-			statement.setInt(1, player.getId());
+			statement = getPreparedStatement
+			(
+				PS_INSERTKEY,
+				"INSERT INTO " + SQLTABLENAME + " " + 
+				"(PLAYERID, LAT, LNG, TIME) VALUES " +
+				"(?, ?, ? , ?)"
+			);
+
 			Position position = player.getPosition();
-			statement.setFloat(2, position.getLatitude());
-			statement.setFloat(3, position.getLongtitude());
+			float lat = position.getLatitude();
+			float lng = position.getLongitude();
 			
-			statement.setInt(4, Calendar.getInstance().get(Calendar.SECOND));
-			statement.execute();
-		}
-		catch (SQLException e)
-		{
-			throw new IllegalArgumentException(e);
+			synchronized(statement)
+			{
+				statement.setInt(1, player.getId());
+				statement.setFloat(2, lat);
+				statement.setFloat(3, lng);
+				
+				statement.setInt(4, Calendar.getInstance().get(Calendar.SECOND));
+				statement.execute();
+				
+				statement.close(); //cleanup executed statement
+			}
+			
+			statement = getPreparedStatement
+			(
+				PS_INSERTSELECTKEY,
+				"SELECT TOP(" + SQLFIELDS + ") " +
+				"FROM " + SQLTABLENAME + " " + 
+				"WHERE " +
+					"PLAYERID = ? AND " +
+					"LAT <> ? AND " +
+					"LNG <> ? " +
+				"ORDER BY " + SQLORDER
+			);
+			
+			synchronized(statement)
+			{
+				statement.setInt(1, player.getId());
+				statement.setFloat(2, lat);
+				statement.setFloat(3, lng);
+				
+				ResultSet result = statement.executeQuery();
+				
+				if(!result.next())
+					return true; //we're done
+				
+				try
+				{	
+					lat = getLatitude(result);
+				}
+				catch(NullPointerException exception)
+				{
+					return true; //no row returned - done
+				}
+			
+				//there's more than one node so create segments
+				boolean returnValue = _segments.add(lat, getLatitude(result), position.getLatitude(), position.getLongitude());
+				commited = commit();
+				return returnValue;
+			}
 		}
 		finally
 		{
+			if(!commited)
+				rollback();
+			
 			finallyCloseStatement(statement);
+			getConnection().setAutoCommit(autoCommit);
 		}
-		
-		return false;
 	}
 
 	public boolean addAll(Collection<? extends Node> c)
@@ -167,8 +169,10 @@ implements Set<Node>
 		return changed;
 	}
 	
-	public boolean contains(Node node)
+	@Override
+	public boolean contains(Object object)
 	{
+		Node node = (Node)object;
 		try
 		{
 			return getString
@@ -177,7 +181,7 @@ implements Set<Node>
 				"WHERE " +
 					"PLAYERID = " + node.getPlayer().getId() + "," +
 					"LAT = " + node.getLatitude() + "," + 
-					"LNG = " + node.getLongtitude()
+					"LNG = " + node.getLongitude()
 			) == null;
 		}
 		catch(SQLException exception)
@@ -237,36 +241,6 @@ implements Set<Node>
 		return result.getFloat(3);
 	}
 	
-	/**
-	 * Returns a Result set containing all Nodes
-	 * Before use a lock has to be set
-	 * @return
-	 * @throws SQLException
-	 */
-	protected ResultSet getAll()
-	throws SQLException
-	{	
-		Statement statement = getConnection().createStatement();
-		
-		try
-		{
-			return statement.executeQuery
-			( 
-				"SELECT " + SQLFIELDS + " " +
-				"FROM " + SQLTABLENAME + " " +
-				"ORDER BY " + SQLORDER
-			);			
-		}
-		catch(SQLException exception)
-		{
-			finallyCloseStatement(statement);
-			throw exception;
-		}
-		
-		//do not close the statement since the ResultSet
-		//has to be accessed outside of method
-	}
-	
 	public int indexOf(Node node)
 	throws SQLException
 	{
@@ -279,7 +253,7 @@ implements Set<Node>
 				if
 				(
 					getLatitude(result) == node.getLatitude()
-					&& getLongtitude(result) == node.getLongtitude()
+					&& getLongtitude(result) == node.getLongitude()
 				)
 				{
 					if(getPlayerId(result) == node.getPlayer().getId())
@@ -304,15 +278,24 @@ implements Set<Node>
 		return size() == 0;
 	}
 
-	public boolean remove(Node node)
-	throws SQLException
+	@Override
+	public boolean remove(Object object)
 	{
-		return deleteFromTable
-		(
-			"PLAYERID = " + node.getPlayer().getId() + " AND " +
-			"LAT = " + node.getLatitude() + " AND " +
-			"LNG = " + node.getLongtitude()
-		) > 0;
+		Node node = (Node)object;
+		
+		try
+		{
+			return deleteFromTable
+			(
+				"PLAYERID = " + node.getPlayer().getId() + " AND " +
+				"LAT = " + node.getLatitude() + " AND " +
+				"LNG = " + node.getLongitude()
+			) > 0;
+		}
+		catch (SQLException exception)
+		{
+			throw wrapInRuntimeException(exception);
+		}
 	}
 
 	private String collectWhere(Collection<?> c)
@@ -330,7 +313,7 @@ implements Set<Node>
 		{
 			position = (Position)iterator.next();
 			
-			pairs[i] = "LAT=" + position.getLatitude() + " AND LNG=" + position.getLongtitude();
+			pairs[i] = "LAT=" + position.getLatitude() + " AND LNG=" + position.getLongitude();
 		}
 			
 		String where = "(" + pairs[0] + ")";
