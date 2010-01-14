@@ -5,6 +5,8 @@ import java.awt.Color;
 import java.awt.Graphics;
 import java.util.ArrayList;
 import org.ron.Collision;
+import org.ron.PositionCollision;
+
 import javax.vecmath.Vector2f;
 
 
@@ -71,32 +73,42 @@ extends Canvas
 		
 		Vector2f[] intersections = new Vector2f[]{new Vector2f(), new Vector2f()};
 		
-		for(Vector2f[] nodes : _nodes)
+		try
 		{
-			for(int i = 1; i != nodes.length; i++)
-			{
-				foregroundColor = Color.getHSBColor(h + i / 1000f, s, b);
-				graphic.setColor(foregroundColor);
-				drawLine(graphic, nodes[i - 1], nodes[i]); 
-					
-				times[0] = System.nanoTime();
-				boolean succeeded = Collision.GetIntersections(_circle, _r, nodes[i - 1], nodes[i], intersections);
-				times[0] = System.nanoTime() - times[0];
-				calcTime += times[0]; 
-		
-				if(!succeeded)
-					continue; //found no intersections
-						
-				for(Vector2f intersection : intersections)
-				{
-					//drawLine(graphic, _circle, intersection);
-					drawCircle(graphic, intersection, 5);
-				}
-			}
+			boolean succeeded;
 			
-			h += 1f / 20f;
-		}
+			for(Vector2f[] nodes : _nodes)
+			{
+				for(int i = 1; i != nodes.length; i++)
+				{
+					foregroundColor = Color.getHSBColor(h + i / 1000f, s, b);
+					graphic.setColor(foregroundColor);
+					drawLine(graphic, nodes[i - 1], nodes[i]); 
+						
+					times[0] = System.nanoTime();
+					
+					succeeded = Collision.GetIntersections(_circle, _r, nodes[i - 1], nodes[i], intersections);
+					times[0] = System.nanoTime() - times[0];
+					calcTime += times[0]; 
+			
+					if(!succeeded)
+						continue; //found no intersections
+							
+					for(Vector2f intersection : intersections)
+					{
+						//drawLine(graphic, _circle, intersection);
+						drawCircle(graphic, intersection, 5);
+					}
+				}
+				
+				h += 1f / 20f;
+			}
 		
-		System.out.println("Calculation took " + calcTime / 1000000 + " ms");
+			System.out.println("Calculation took " + calcTime / 1000000 + " ms");
+		}
+		catch(PositionCollision exception)
+		{
+			System.out.println("Boom");
+		}
 	}
 }

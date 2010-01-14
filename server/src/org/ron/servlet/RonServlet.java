@@ -16,6 +16,7 @@ import org.apache.commons.dbcp.PoolingDriver;
 import org.apache.commons.pool.impl.GenericObjectPool;
 import org.apache.commons.pool.impl.StackKeyedObjectPoolFactory;
 import org.apache.xmlrpc.webserver.XmlRpcServlet;
+import org.ron.PositionCollision;
 
 public class RonServlet
 extends XmlRpcServlet
@@ -160,6 +161,9 @@ extends XmlRpcServlet
 	{		
 		Player player = _players.get(playerId);
 		
+		if(player.hasLost())
+			return "<state/>"; //user no longer needs updates
+		
 		//before anything else update position
 		player.setPosition((float)lat, (float)lng);
 		
@@ -171,23 +175,39 @@ extends XmlRpcServlet
 		Calendar newUpdateTime = updateCalendar;
 		
 		Segment[] segments;
-		
-		for(Player otherPlayer : _players)
+		try
 		{
-			if(otherPlayer.equals(player))
-				continue; //we already have all data of current player on device
-		
-			segments = otherPlayer.getSegments(updateCalendar);
+			Boolean allLost = null;
 			
-			for(Segment segment : segments)
+			for(Player otherPlayer : _players)
 			{
-				if(newUpdateTime.after(segment.getTime()))
-					continue; //update is already "older"
+				if(otherPlayer.equals(player))
+					continue; //we already have all data of current player on device
+			
+				if(allLost == null)
+					allLost = true;
 				
-				newUpdateTime = segment.getTime();
+				allLost = allLost && otherPlayer.hasLost();
+			
+				segments = otherPlayer.getSegments(updateCalendar);
+				
+				for(Segment segment : segments)
+				{
+					if(newUpdateTime.after(segment.getTime()))
+						continue; //update is already "older"
+					
+					newUpdateTime = segment.getTime();
+				}
+				
+				player.getUpdate(writer, segments);
 			}
 			
-			player.getUpdate(writer, segments);
+			if(allLost)
+				return "<state won=\"true\"/>";
+		}
+		catch(PositionCollision exception)
+		{
+			return "<state lost=\"true\"/>";
 		}
 		
 		return

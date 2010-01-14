@@ -12,7 +12,7 @@ extends AbstractDatabase<Player>
 implements Set<Player>
 {
 	private final String SQLTABLENAME = "PLAYER";
-	private final String SQLFIELDS = "ID,LAT,LNG,NAME";
+	private final String SQLFIELDS = "ID,LAT,LNG,NAME,BITS";
 	private final String SQLORDER = "ID ASC";
 	private NodeDatabase _nodes;
 	
@@ -70,7 +70,8 @@ implements Set<Player>
     				"ID INTEGER PRIMARY KEY NOT NULL," +
     				"LAT REAL NULL," +
     				"LNG REAL NULL," +
-    				"NAME TEXT NOT NULL" +
+    				"NAME TEXT NOT NULL," +
+    				"BITS INTEGER NULL" +
     			")"
 		);
 	}
@@ -153,9 +154,22 @@ implements Set<Player>
 		return new Player(getPlayerId(result), this);
 	}
 	
-	private static final int SELECTPLAYER = getUniqueRandom(); 
+	private static final int BIT_LOST = 1 << 0;
 	
-	public Player get(int playerId)
+	public boolean hasLost(Player player)
+	throws SQLException
+	{
+		return (getPlayerBits(player) & BIT_LOST) == BIT_LOST;
+	}
+	
+	public void setLost(Player player, boolean set)
+	{
+		setPlayerBits(player, getPlayerBits(player) | BIT_LOST);
+	}
+	
+	private static final int SELECTPLAYER = getUniqueRandom();
+	
+	protected ResultSet getResult(Player player)
 	throws SQLException
 	{
 		PreparedStatement statement = getPreparedStatement
@@ -166,20 +180,47 @@ implements Set<Player>
 			"WHERE ID = ?"
 		);
 		
+		statement.setInt(1, player.getId());
+		ResultSet result = statement.executeQuery();
+
+		result.next();
+		
+		//TODO: check for null
+		return result;
+	}
+	
+	protected int getPlayerBits(Player player)
+	throws SQLException
+	{
+		ResultSet result = null;
+		
 		try
 		{
-			statement.setInt(1, playerId);
-			ResultSet result = statement.executeQuery();
-
-			if(!result.next() || result.getString(1) == null)
-				throw new IllegalArgumentException("Id not taken");
-			
-			return new Player(playerId, this);
+			result = getResult(player);
+			return getPlayerBits(result);
 		}
 		finally
 		{
-			finallyCloseStatement(statement);
+			finallyCloseStatement(result);
 		}
+	}
+	
+	protected void setPlayerBits(Player player, int bits)
+	{
+		
+	}
+	
+	public Player get(int playerId)
+	throws SQLException
+	{
+		//TODO: check for existance
+		return new Player(playerId, this);
+	}
+	
+	protected int getPlayerBits(ResultSet result)
+	throws SQLException
+	{
+		return result.getInt(4);
 	}
 	
 	protected String getPlayerName(ResultSet result)

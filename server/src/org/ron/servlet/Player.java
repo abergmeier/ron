@@ -3,6 +3,8 @@ package org.ron.servlet;
 import java.sql.SQLException;
 import java.util.Calendar;
 
+import org.ron.PositionCollision;
+
 
 public class Player
 implements Position
@@ -61,6 +63,12 @@ implements Position
 	{
 		return this;
 	}
+	
+	public boolean hasLost()
+	throws SQLException
+	{
+		return _database.hasLost(this);
+	}
 
 	public float getLatitude()
 	{
@@ -94,7 +102,7 @@ implements Position
 	}
 	
 	public void getUpdate(ClientWriter writer, Segment[] segments)
-	throws SQLException
+	throws SQLException, PositionCollision
 	{
 		_database.getNodes().getSegments().getViews().getUpdate(writer, this, segments);
 	}

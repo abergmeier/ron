@@ -46,7 +46,7 @@ public class Collision
 		public void add(Vector2f entry)
 		{
 			entry.sub(_mid);
-			
+
 			try
 			{
 				_result.add(new Vector2f(entry));
@@ -171,11 +171,13 @@ public class Collision
 	}
 	
 	public static boolean GetIntersections(Vector2f midCircle, Vector2f A, Vector2f B, Vector2f[] colResult)
+	throws PositionCollision
 	{
 		return GetIntersections(midCircle, RADIUS, A, B, colResult);
 	}
 	
 	public static boolean GetIntersections(float lat, float lng, Vector2f A, Vector2f B, Vector2f[] colResult)
+	throws PositionCollision
 	{
 		return GetIntersections(new Vector2f(lat, lng), A, B, colResult);
 	}

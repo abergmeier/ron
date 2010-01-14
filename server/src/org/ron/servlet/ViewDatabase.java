@@ -10,6 +10,7 @@ import java.util.Iterator;
 import javax.vecmath.Vector2f;
 
 import org.ron.Collision;
+import org.ron.PositionCollision;
 
 public class ViewDatabase
 extends AbstractDatabase<ViewSegment>
@@ -28,7 +29,7 @@ extends AbstractDatabase<ViewSegment>
 	}	
 
 	public void getUpdate(ClientWriter writer, Player player, Segment[] segments)
-	throws SQLException
+	throws SQLException, PositionCollision
 	{	
 		Vector2f[] collidingVectors = new Vector2f[]{new Vector2f(), new Vector2f()}; 
 		Vector2f[] buffer = new Vector2f[2];
