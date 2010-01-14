@@ -163,6 +163,7 @@ implements Set<Player>
 	}
 	
 	public void setLost(Player player, boolean set)
+	throws SQLException
 	{
 		setPlayerBits(player, getPlayerBits(player) | BIT_LOST);
 	}
