@@ -6,6 +6,91 @@
 		<script type="text/javascript" src="mimic.js"></script>
 		<script type="text/javascript">
 
+			//* Start of simulation block
+			//set the type of page			
+			var _simulation;
+
+			function Simulation()
+			{
+				var player1Positions = new Object();
+				player1Positions[1] = new google.maps.LatLng(53.089062, 8.785372);
+				player1Positions[3] = new google.maps.LatLng(53.090448, 8.789685);
+				player1Positions[7] = new google.maps.LatLng(53.088898, 8.790016);
+				player1Positions[14] = new google.maps.LatLng(53.088499, 8.792035);
+				player1Positions[15] = new google.maps.LatLng(53.089146, 8.792739);
+				player1Positions[19] = new google.maps.LatLng(53.090638, 8.791516);
+				
+				var player2Positions = new Object();				
+				var player3Positions = new Object();
+				var player4Positions = new Object();
+				
+				this._simulationStartTime = getTime();
+				this._simulationLastDeltaMS = 0;
+				this._playerPositions = new Array
+				(
+					player1Positions,
+					player2Positions,
+					player3Positions,
+					player4Positions
+				);
+
+				var player1Nodes = new Object();
+				player1Nodes[2] = true;
+				player1Nodes[6] = true;
+				player1Nodes[10] = true;
+
+				var player2Nodes = new Object();
+				var player3Nodes = new Object();
+				var player4Nodes = new Object();
+
+				this._playerNodes = new Array
+				(
+					player1Nodes,
+					player2Nodes,
+					player3Nodes,
+					player4Nodes
+				);
+			}
+
+			Simulation.prototype.onClick = function()
+			{
+				var nodes = this._playerNodes(getPlayer().getId());
+
+				for(var seconds in nodes)
+				{
+					submitPoint();
+				} 
+			};
+
+			Simulation.prototype.watchPosition = function(functionName)
+			{
+				var positions = this._playerPositions(getPlayer().getId());
+				var position;
+				var wrapper;
+				
+				for(var seconds in positions)
+				{
+					position = positions[seconds];
+					wrapper = new Object();
+					wrapper.coords = new Object();
+					wrapper.coords.latitude = position.lat();
+					wrapper.coords.longitude = position.lng();
+					
+					window.setTimeout
+					(
+						function()
+						{					
+							functionName(wrapper);
+						},
+						parseInt(seconds) * 1000
+					);
+				}
+					
+				return null;
+			};
+
+			//* End of simulation block
+
 			//use object for associative array - works better
 			var _players = new Object();
 			_players.length = 0;
@@ -51,6 +136,10 @@
 					this.PolyLine.setMap(_map);
 
 					removePartials();
+
+					//make sure line is displayed
+					fitBounds(start);
+					fitBounds(end);
 				}
 
 				function setPartial(startLat, startLng, endLat, endLng)
@@ -72,6 +161,10 @@
 					);
 					polyline.setMap(_map);
 					this.Partials.push(polyline);
+
+					//make sure partials are displayed
+					fitBounds(start);
+					fitBounds(end);
 				}
 
 				function isPartial()
@@ -87,33 +180,51 @@
 				this.Color = colors[_players.length];
 
 				this.Lines = new Object();
+			}
 
-				function getLine(segmentId)
+			Player.prototype.addPartialLine = function(segmentId, startLat, startLng, endLat, endLng)
+			{
+				var line = this.getLine(segmentId);
+				line.addPartial(startLat, startLng, endLat, endLng);
+			};
+
+			Player.prototype.addLine = function(segmentId, startLat, startLng, endLat, endLng)
+			{
+				var line = this.getLine(segmentId);
+				line.set(startLat, startLng, endLat, endLng);					
+			};
+
+			Player.prototype.getLine = function(segmentId)
+			{
+				var line = this.Lines[segmentId];
+
+				//no line yet - create new one
+				if(!line)
 				{
-					var line = this.Lines[segmentId];
-
-					//no line yet - create new one
-					if(!line)
-					{
-						line = new Line(this);
-						this.Lines[segmentId] = line;
-					}
-
-					return line;
+					line = new Line(this);
+					this.Lines[segmentId] = line;
 				}
-				
-				function addLine(segmentId, startLat, startLng, endLat, endLng)
-				{
-					var line = getLine(segmentId);
-					line.set(startLat, startLng, endLat, endLng);						
-				} 
 
-				function addPartialLine(segmentId, startLat, startLng, endLat, endLng)
+				return line;
+			};
+
+			Player.prototype.getId = function()
+			{
+				return this.ID;
+			};
+
+			function getPlayerById(id)
+			{
+				var player = _players[id];
+
+				if(!player)
 				{
-					var line = getLine(segmentId);
-					line.addPartial(startLat, startLng, endLat, endLng);
+					player = new Player("unknown", id);
+					_players[id] = player;
 				}
-			}	
+
+				return player;
+			}
 		
 			//save the last servertime of a received update
 			var lastServerTime;
@@ -121,7 +232,7 @@
 			var marker;
 			var bounds;
 
-			var watchID;
+			var _watchID;
 			
 			var geoImpl; //which interface for location retrieval to use
 			//var ServerUrl = "http://ron.lcid-fire.org/server.php";
@@ -136,9 +247,13 @@
 				}
 
 				var response = request.send();
-				
+
 				response.parseXML();
-				return response.params;
+
+				if(response.isFault())
+					return null;
+				else
+					return response.params;
 			}
 		
 			function updatePosition(position)
@@ -181,13 +296,16 @@
 				if(!marker)
 					return;
 
-				callRPCMethod("addNode", getPlayer().ID);
+				callRPCMethod("addNode", getPlayer().getId());
 
+				var myLatLng = new google.maps.LatLng(lat, lng);
+				//make sure marker is displayed
+				fitBounds(myLatLng);
 				//display the just submitted points
 				displayPoints(playerId, lastServerPosition[0], lastServerPosition[1]);
 			}
 		
-			function displayPoints(player_id)
+			/*function displayPoints(player_id)
 			{
 				var player = _players[player_id];
 
@@ -209,7 +327,7 @@
 					//make sure map is centered so point is visible
 					fitBounds(latLng);
 				}
-			}
+			}*/
 			
 			function createXml(markup)
 			{
@@ -265,28 +383,12 @@
 
 			function addLine(player, elementId, startLat, startLng, endLat, endLng)
 			{
-				player.addLine(segmentId, startLat, startLng, endLat, endLng);	
-				
-				displayPoints
-				(
-					player,
-					segmentId,
-					lat,
-					lng
-				);
+				player.addLine(segmentId, startLat, startLng, endLat, endLng);
 			}
 
 			function addPartialLine(player, elementId, startLat, startLng, endLat, endLng)
 			{
 				player.addPartialLine(segmentId, startLat, startLng, endLat, endLng);	
-				
-				displayPoints
-				(
-					player,
-					segmentId,
-					lat,
-					lng
-				);
 			}				
 		
 			function getPoints()
@@ -296,11 +398,16 @@
 				
 				var position = marker.getPosition();
 
+				var playerId = getPlayer().getId();
+
 				var responseParameters;
 				if(lastServerTime)
-					responseParameters = callRPCMethod("updateState", getPlayer().ID, position.lat(), position.lng(), lastServerTime);
+					responseParameters = callRPCMethod("updateState", playerId, position.lat(), position.lng(), lastServerTime);
 				else
-					responseParameters = callRPCMethod("updateState", getPlayer().ID, position.lat(), position.lng());
+					responseParameters = callRPCMethod("updateState", playerId, position.lat(), position.lng());
+
+				if(!responseParameters)
+					return; //TODO: problem handling
 
 				lastServerPosition[0] = position.lat(); 
 				lastServerPosition[1] = position.lng();
@@ -308,6 +415,10 @@
 				var responseDocument = createXml(responseParameters[0]);
 				
 				var stateElement = responseDocument.getElementsByTagName("state")[0];
+
+				if(!stateElement)
+					return; //TODO: handle problem
+					
 				lastServerTime = parseInt(stateElement.getAttribute("time"));
 			
 				var playerElements = responseDocument.getElementsByTagName("player");
@@ -319,7 +430,7 @@
 				{
 					id = playerElements[i].getAttribute("id");
 
-					player = _players[id];
+					player = getPlayerById(id);
 
 					//process whole segments
 					callForAll(player, playerElements[i].getElementsByTagName("segment"), addLine);
@@ -347,12 +458,12 @@
 					
 				var parameter = callRPCMethod("addPlayer", playerName, lat, lng);
 
-				if(parameter.length == 0)
+				if(!parameter || parameter.length == 0)
 					return false;
 				
 				var playerId = parameter[0];
 
-				if(playerId == null)
+				if(!playerId)
 					return false; //something unexpected went wrong
 									
 				var player = new Player(playerName, playerId);
@@ -372,8 +483,8 @@
 				if(!getPlayer())
 					return; //we don't have logged in player
 				
-				callRPCMethod("removePlayer", getPlayer().ID);
-				_players.splice(0, player.length);
+				callRPCMethod("removePlayer", getPlayer().getId());
+				_players.splice(0, _players.length);
 			}
 
 			function login()
@@ -399,7 +510,10 @@
 				(
 					function(position)
 					{
-						playerName = prompt("Please enter your player's name", "");
+						if(_simulation)
+							playerName = "Bot";
+						else
+							playerName = prompt("Please enter your player's name", "");
 						
 						if(playerName == null)
 							return;
@@ -443,22 +557,35 @@
 						
 						updatePosition(position);
 
-						//not working for some awkward reason
-						//google.maps.event.addListener(_map, 'click', submitPoint);
-						watchID = location.watchPosition(updatePosition);
+						var watchPosition;
+						
+						if(_simulation)
+							watchPosition = _simulation.watchPosition; 
+						else
+							watchPosition = location.watchPosition;
+						
+						_watchID = watchPosition(updatePosition);
 		
 						//refresh the points every second
 						window.setInterval("getPoints()", 1000);
 
-						document.onclick = submitPoint;
+						//user interaction not allowed for simulation
+						if(_simulation)
+							_simulation.onClick();
+						else
+						{
+							//not working for some awkward reason
+							//google.maps.event.addListener(_map, 'click', submitPoint);
+							document.onclick = submitPoint;
+						}
 					}
 				);  
 			}
 		
 			function logout()
 			{
-				if(watchID && navigator.geolocation)
-					navigator.geolocation.clearWatch(watchID);
+				if(_watchID && navigator.geolocation)
+					navigator.geolocation.clearWatch(_watchID);
 
 				window.clearInterval("getPoints()");
 				removePlayer();
