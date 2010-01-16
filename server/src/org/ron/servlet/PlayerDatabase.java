@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Savepoint;
 import java.util.Collection;
 import java.util.Set;
 
@@ -11,9 +12,10 @@ public class PlayerDatabase
 extends AbstractDatabase<Player>
 implements Set<Player>
 {
-	private final String SQLTABLENAME = "PLAYER";
-	private final String SQLFIELDS = "ID,LAT,LNG,NAME,BITS";
-	private final String SQLORDER = "ID ASC";
+	public static final String SQLTABLENAME = "PLAYER";
+	public static final String SQLIDCOLUMN = "ID";
+	private static final String SQLFIELDS = SQLIDCOLUMN + ",LAT,LNG,NAME,BITS";
+	private static final String SQLORDER = SQLIDCOLUMN + " ASC";
 	private NodeDatabase _nodes;
 	
 	public PlayerDatabase(Connection connection)
@@ -21,6 +23,8 @@ implements Set<Player>
 	{
 		super(connection);
 		_nodes = new NodeDatabase(this);
+	
+		setConnection(connection);
 	}
 	
 	public NodeDatabase getNodes()
@@ -41,6 +45,15 @@ implements Set<Player>
 	protected String getSQLOrder()
 	{
 		return SQLORDER;
+	}
+	
+	@Override
+	public void setConnection(Connection connection)
+	{
+		if(_nodes != null)
+			_nodes.setConnection(connection);
+		
+		super.setConnection(connection);
 	}
 /*	
 	//creates a new database on the session if necessary 
@@ -65,14 +78,14 @@ implements Set<Player>
 	{
 		execute
 		(
-				"CREATE TABLE " + SQLTABLENAME + " " + 
+				"CREATE TABLE IF NOT EXISTS " + SQLTABLENAME + " " + 
 				"(" +
     				"ID INTEGER PRIMARY KEY NOT NULL," +
     				"LAT REAL NULL," +
     				"LNG REAL NULL," +
     				"NAME TEXT NOT NULL," +
     				"BITS INTEGER NULL" +
-    			")"
+    			");"
 		);
 	}
 	
@@ -82,29 +95,44 @@ implements Set<Player>
 		return result.getInt(1);
 	}
 	
-	private static final int RESULTSET = getUniqueRandom();
+	private static final int PS_RESULTSET = getUniqueRandom();
 	
 	protected ResultSet getResultSet(Player player)
 	throws SQLException
 	{
 		PreparedStatement statement = getPreparedStatement
 		(
-			RESULTSET,
+			PS_RESULTSET,
 			"SELECT " + SQLFIELDS + " " +
 			"FROM " + SQLTABLENAME + " " +
 			"WHERE ID = ?"
 		);
 		
 		ResultSet result = null;
-
-		statement.setInt(1, player.getId());
-		result = statement.executeQuery();
+		
+		try
+		{
+			synchronized(statement)
+			{
+				statement.setInt(1, player.getId());
+				result = statement.executeQuery();
+				
+				if(result.next())
+					return result;
+			}
 			
-		if(result.next())
-			return result;
-
-		finallyCloseStatement(statement);
-		throw new RuntimeException("FUCKUP");
+			throw new SQLException("NO RESULT!");
+		}
+		catch(SQLException exception)
+		{
+			finallyCloseStatement(result);
+			throw exception;
+		}
+		catch(RuntimeException exception)
+		{
+			finallyCloseStatement(result);
+			throw exception;
+		}
 	}
 	
 	public float getLatitude(Player player)
@@ -168,26 +196,44 @@ implements Set<Player>
 		setPlayerBits(player, getPlayerBits(player) | BIT_LOST);
 	}
 	
-	private static final int SELECTPLAYER = getUniqueRandom();
+	private static final int PS_SELECTPLAYER = getUniqueRandom();
 	
 	protected ResultSet getResult(Player player)
 	throws SQLException
 	{
 		PreparedStatement statement = getPreparedStatement
 		(
-			SELECTPLAYER,
+			PS_SELECTPLAYER,
 			"SELECT " + SQLFIELDS + " " + 
 			"FROM " + SQLTABLENAME + " " + 
 			"WHERE ID = ?"
 		);
 		
-		statement.setInt(1, player.getId());
-		ResultSet result = statement.executeQuery();
-
-		result.next();
+		ResultSet result = null;
 		
-		//TODO: check for null
-		return result;
+		try
+		{
+			synchronized(statement)
+			{
+				statement.setInt(1, player.getId());
+				result = statement.executeQuery();
+			
+				if(result.next())
+					return result;
+			}
+			
+			throw new SQLException("NO RESULT");			
+		}
+		catch(SQLException exception)
+		{
+			finallyCloseStatement(result);
+			throw exception;
+		}
+		catch(RuntimeException exception)
+		{
+			finallyCloseStatement(result);
+			throw exception;
+		}
 	}
 	
 	protected int getPlayerBits(Player player)
@@ -207,8 +253,14 @@ implements Set<Player>
 	}
 	
 	protected void setPlayerBits(Player player, int bits)
+	throws SQLException
 	{
-		
+		execute
+		(
+			"UPDATE " + SQLTABLENAME + " " + 
+			"SET BITS = " + bits + " " +
+			"WHERE ID = " + player.getId()
+		);			
 	}
 	
 	public Player get(int playerId)
@@ -251,30 +303,26 @@ implements Set<Player>
 		setPosition(player, position.getLatitude(), position.getLongitude()); 
 	}
 	
+	private static final int PS_POSITION = getUniqueRandom(); 
+	
 	public void setPosition(Player player, float lat, float lng)
 	throws SQLException
 	{
-		final int KEY = getUniqueRandom();
-		
 		PreparedStatement statement = getPreparedStatement
 		(
-			KEY,
+			PS_POSITION,
 			"UPDATE " + SQLTABLENAME + " " +
 			"SET LAT = ?, LNG = ?" +
 			"WHERE ID = ?"
 		);
 		
-		try
+		synchronized(statement)
 		{
 			statement.setFloat(1, lat);
 			statement.setFloat(2, lng);
 			statement.setInt(3, player.getId());
-			statement.executeQuery();			
+			statement.executeUpdate();			
 		}
-		finally
-		{
-			finallyCloseStatement(statement);
-		}		
 	}
 
 	public boolean isEmpty()
@@ -290,10 +338,9 @@ implements Set<Player>
 	public Player add(String playerName, float lat, float lng)
 	throws SQLException
 	{
-		boolean autoCommit = getConnection().getAutoCommit();
-		getConnection().setAutoCommit(false);
-		boolean commited = false;
-		ResultSet result = null;
+		Savepoint save = getConnection().setSavepoint();
+		//boolean autoCommit = getConnection().getAutoCommit();
+		//getConnection().setAutoCommit(false);
 		
 		try
 		{
@@ -301,14 +348,16 @@ implements Set<Player>
 			(
 				"INSERT INTO " + SQLTABLENAME + " " +
 				"(NAME, LAT, LNG) VALUES " +
-				"('" + playerName + "'," + lat + "," + lng + ")"
+				"('" + playerName + "'," + lat + "," + lng + ");"
 			);
 			
 			int id;
 			
+			ResultSet result = null;
+			
 			try
 			{
-				result = getWhere("WHERE NAME = '" + playerName + "'");
+				result = getWhere("NAME = '" + playerName + "'");
 				id = getPlayerId(result);
 			}
 			finally
@@ -316,15 +365,21 @@ implements Set<Player>
 				finallyCloseStatement(result);
 			}
 			
-			commited = commit();
 			return new Player(id, this);
+		}
+		catch(SQLException exception)
+		{
+			rollback(save);
+			throw exception;
+		}
+		catch(RuntimeException exception)
+		{
+			rollback(save);
+			throw exception;
 		}
 		finally
 		{
-			if(!commited)
-				rollback();
-			
-			getConnection().setAutoCommit(autoCommit);
+			getConnection().releaseSavepoint(save);
 		}
 	}
 
@@ -367,6 +422,7 @@ implements Set<Player>
 		return true;
 	}
 	
+	@Override
 	public boolean remove(Object object)
 	{
 		try
@@ -379,6 +435,7 @@ implements Set<Player>
 		}
 	}
 	
+	@Override
 	public boolean removeAll(Collection<?> arg0)
 	{
 		boolean changed = false;
@@ -391,6 +448,7 @@ implements Set<Player>
 		return changed;
 	}
 
+	@Override
 	public boolean retainAll(Collection<?> arg0)
 	{
 		String playerIds = "";

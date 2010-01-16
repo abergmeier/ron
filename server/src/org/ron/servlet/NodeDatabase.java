@@ -1,9 +1,10 @@
 package org.ron.servlet;
 
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Calendar;
+import java.sql.Savepoint;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
@@ -13,8 +14,8 @@ extends AbstractDatabase<Node>
 implements Set<Node>
 {
 	private static final String SQLTABLENAME = "NODE";
-	private static final String SQLFIELDS = "PLAYERID,LAT,LNG,TIME";
-	private static final String SQLORDER = "TIME ASC";
+	private static final String SQLFIELDS = "PLAYERID,LAT,LNG,ID";
+	private static final String SQLORDER = "PLAYERID ASC";
 	
 	private PlayerDatabase _players;
 	private SegmentDatabase _segments;
@@ -25,6 +26,8 @@ implements Set<Node>
 		super(players.getConnection());
 		_players = players;
 		_segments = new SegmentDatabase(this);
+		
+		setConnection(_players.getConnection());
 	}
 	
 	public SegmentDatabase getSegments()
@@ -47,21 +50,31 @@ implements Set<Node>
 		return SQLORDER;
 	}
 	
+	@Override
+	public void setConnection(Connection connection)
+	{
+		if(_segments != null)
+			_segments.setConnection(connection);
+		
+		super.setConnection(connection);
+	}
+	
+	@Override
 	protected void createTable()
 	throws SQLException
 	{
+		
 		execute
 		(
-				"BEGIN;" +
-				"CREATE TABLE " + SQLTABLENAME + " " +
+				"CREATE TABLE IF NOT EXISTS " + SQLTABLENAME + " " +
 				"(" +
-					"PLAYERID INTEGER NOT NULL, " +
+					"PLAYERID INTEGER NOT NULL," +
 					"LAT REAL NOT NULL, " +
-					"LNG REAL NOT NULL, " +
-					"TIME INTEGER NOT NULL" +
+					"LNG REAL NOT NULL," +
+					"ID INTEGER PRIMARY KEY NOT NULL," +
+					"FOREIGN KEY (PLAYERID) REFERENCES " + PlayerDatabase.SQLTABLENAME + "(" + PlayerDatabase.SQLIDCOLUMN + ")" +
 				");" +
-				"CREATE UNIQUE INDEX \"position-index\" on node (LAT ASC, LNG ASC);" +
-				"COMMIT;"
+				"CREATE UNIQUE INDEX \"position-index\" on node (LAT, LNG);"
 		);
 	}	
 	
@@ -79,9 +92,11 @@ implements Set<Node>
 	{
 		PreparedStatement statement = null;
 		
-		boolean autoCommit = getConnection().getAutoCommit();
+		Savepoint save = getConnection().setSavepoint();
+		/*
 		getConnection().setAutoCommit(false);
 		boolean commited = false;
+		*/
 		
 		try
 		{
@@ -89,8 +104,8 @@ implements Set<Node>
 			(
 				PS_INSERTKEY,
 				"INSERT INTO " + SQLTABLENAME + " " + 
-				"(PLAYERID, LAT, LNG, TIME) VALUES " +
-				"(?, ?, ? , ?)"
+				"(PLAYERID, LAT, LNG) VALUES " +
+				"(?, ?, ?);"
 			);
 
 			Position position = player.getPosition();
@@ -102,8 +117,6 @@ implements Set<Node>
 				statement.setInt(1, player.getId());
 				statement.setFloat(2, lat);
 				statement.setFloat(3, lng);
-				
-				statement.setInt(4, Calendar.getInstance().get(Calendar.SECOND));
 				statement.execute();
 				
 				statement.close(); //cleanup executed statement
@@ -112,13 +125,14 @@ implements Set<Node>
 			statement = getPreparedStatement
 			(
 				PS_INSERTSELECTKEY,
-				"SELECT TOP(" + SQLFIELDS + ") " +
+				"SELECT " + SQLFIELDS + " " +
 				"FROM " + SQLTABLENAME + " " + 
 				"WHERE " +
 					"PLAYERID = ? AND " +
 					"LAT <> ? AND " +
 					"LNG <> ? " +
-				"ORDER BY " + SQLORDER
+				"ORDER BY ID DESC," + SQLORDER + " " +
+				"LIMIT 1"				
 			);
 			
 			synchronized(statement)
@@ -127,33 +141,47 @@ implements Set<Node>
 				statement.setFloat(2, lat);
 				statement.setFloat(3, lng);
 				
+				//check whether there are more than 1 node present
 				ResultSet result = statement.executeQuery();
 				
-				if(!result.next())
-					return true; //we're done
-				
 				try
-				{	
-					lat = getLatitude(result);
-				}
-				catch(NullPointerException exception)
 				{
-					return true; //no row returned - done
+					if(!result.next())
+						return true; //we're done
+					
+					try
+					{	
+						lat = getLatitude(result);
+					}
+					catch(NullPointerException exception)
+					{
+						return true; //no row returned - done
+					}
+				
+					//there's more than one node so create segments
+					boolean returnValue = _segments.add(lat, getLatitude(result), position.getLatitude(), position.getLongitude());
+					//commited = commit();
+					return returnValue;
 				}
-			
-				//there's more than one node so create segments
-				boolean returnValue = _segments.add(lat, getLatitude(result), position.getLatitude(), position.getLongitude());
-				commited = commit();
-				return returnValue;
+				finally
+				{
+					result.close();
+				}
 			}
+		}
+		catch(RuntimeException exception)
+		{
+			rollback(save);
+			throw exception;
+		}
+		catch(SQLException exception)
+		{
+			rollback(save);
+			throw exception;
 		}
 		finally
 		{
-			if(!commited)
-				rollback();
-			
-			finallyCloseStatement(statement);
-			getConnection().setAutoCommit(autoCommit);
+			getConnection().releaseSavepoint(save);
 		}
 	}
 
@@ -205,7 +233,7 @@ implements Set<Node>
 	protected Node get(ResultSet result)
 	throws SQLException
 	{
-		return new Node(new Player(getPlayerId(result), _players), getLatitude(result), getLongtitude(result));
+		return new Node(new Player(getPlayerId(result), _players), getNodeId(result), getLatitude(result), getLongtitude(result));
 	}
 	
 	protected Node get(float lat, float lng)
@@ -239,6 +267,12 @@ implements Set<Node>
 	throws SQLException
 	{
 		return result.getFloat(3);
+	}
+	
+	protected int getNodeId(ResultSet result)
+	throws SQLException
+	{
+		return result.getInt(4);
 	}
 	
 	public int indexOf(Node node)

@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Savepoint;
+import java.sql.Statement;
 import java.util.Calendar;
 import java.io.IOException;
 import javax.servlet.ServletException;
@@ -28,9 +29,9 @@ extends XmlRpcServlet
 	
 	private GenericObjectPool _pool = null;
 	private PoolableConnectionFactory _factory = null;
-	private final String DRIVERKEY = "SQLITEDRIVER";
+	private static final String DRIVERKEY = "SQLITEDRIVER";
 	
-	private PlayerDatabase _players = null;
+	private static PlayerDatabase _players = null;
 	
 	@Override
 	public void init(javax.servlet.ServletConfig config)
@@ -62,6 +63,11 @@ extends XmlRpcServlet
 		
 		try
 		{
+			_players.getNodes().getSegments().getViews().close();
+			_players.getNodes().getSegments().close();
+			_players.getNodes().close();
+			_players.close();
+			
 			_pool.close();
 		}
 		catch(Exception exception)
@@ -96,11 +102,12 @@ extends XmlRpcServlet
 		if(connection == null)
 			throw new NullPointerException("Could not create database");
 		
-		return connection;
+		return new SQLiteConnection(connection);
 	}
 
 	//workaround since the Request object is not accessible in the handlers
 	//so remember it beforehand for each Post
+	@Override
 	public void doPost(HttpServletRequest request, HttpServletResponse response)
 	throws IOException, ServletException
 	{
@@ -108,52 +115,63 @@ extends XmlRpcServlet
         	setHttpSession(request.getSession());
         	*/
         	
-        	Connection connection;
-			try
-			{
-				connection = getConnection();
+		
+    	Connection connection;
+		try
+		{
+			connection = getConnection();
+    	
+        	if(_players == null)
+	        	_players = new PlayerDatabase(connection);
+        	else
+        		_players.setConnection(connection);
         	
-	        	if(_players == null)
-		        	_players = new PlayerDatabase(connection);
-	        	else
-	        		_players.setConnection(connection);
-			}
-			catch (SQLException exception)
-			{
-				throw new ServletException(exception);
-			}
-			catch (ClassNotFoundException exception)
-			{
-				throw new ServletException(exception);
-			}
-    		
-	        super.doPost(request, response);
-	            
-	        try
-	        {
-		        //clear connection again
-		        _players.setConnection(null);
-				connection.close();
-			}
-	        catch (SQLException exception)
-	        {
-	        	throw new ServletException(exception);
-			}
-	        
+        	Statement statement = connection.createStatement();
+        	statement.execute("PRAGMA foreign_keys = ON;");        	
+		}
+		catch (SQLException exception)
+		{
+			throw new ServletException(exception);
+		}
+		catch (ClassNotFoundException exception)
+		{
+			throw new ServletException(exception);
+		}
+		
+		super.doPost(request, response);
+            
+        try
+        {
+	        //clear connection again
+	        _players.setConnection(null);
+			connection.close();
+		}
+        catch (SQLException exception)
+        {
+        	throw new ServletException(exception);
+		}   
 	}
 	
-	public void addNode(int playerId)
+	public boolean addNode(int playerId)
 	throws SQLException, ClassNotFoundException
 	{
 		Player player = _players.get(playerId);
 		_players.getNodes().addForPlayerPosition(player);
+		return true;
 	}
 	
-	public void removeNode(double lat, double lng)
+	public boolean removeNode(double lat, double lng)
 	throws SQLException, ClassNotFoundException
 	{
 		NodeDatabase _database = _players.getNodes();
 		_database.remove(_database.get((float)lat, (float)lng));
+		return true;
+	}
+	
+	public String updateState(int playerId, double lat, double lng)
+	throws SQLException, ClassNotFoundException
+	{
+		return updateState(playerId, lat, lng, 0);
 	}
 	
 	public String updateState(int playerId, double lat, double lng, int time)
@@ -202,7 +220,7 @@ extends XmlRpcServlet
 				player.getUpdate(writer, segments);
 			}
 			
-			if(allLost)
+			if(allLost != null && allLost)
 				return "<state won=\"true\"/>";
 		}
 		catch(PositionCollision exception)
@@ -219,30 +237,33 @@ extends XmlRpcServlet
 
 	public int addPlayer(String name, double latitude, double longitude)
 	throws SQLException, ClassNotFoundException
-	{
+	{		
 		Player newPlayer = _players.add(name, (float)latitude, (float)longitude);
 		return newPlayer.getId();
 	}
 	
-	public void removePlayer(int playerId)
+	public boolean removePlayer(int playerId)
 	throws SQLException, ClassNotFoundException
 	{
-		Savepoint save = null;
-		Connection connection = null;
+		Connection connection = _players.getConnection();
+		Savepoint save = connection.setSavepoint();
 		
 		try
 		{
-			connection = _players.getConnection();
-			save = connection.setSavepoint();
-		
 			//first remove all nodes of the player
 			_players.getNodes().clear();
 			_players.remove(_players.get(playerId));
+			return true;
 		}
-		catch(Exception exception)
+		catch(SQLException exception)
 		{
-			if(save != null)
-				connection.rollback(save);
+			connection.rollback(save);
+			throw exception;
+		}
+		catch(RuntimeException exception)
+		{
+			connection.rollback(save);
+			throw exception;
 		}
 		finally
 		{

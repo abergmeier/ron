@@ -56,8 +56,27 @@ implements Collection<Element>
 			createTable();
 	}
 	
+	public void close()
+	{
+		synchronized(_connectionMap)
+		{
+			for(PreparedStatement statement : _connectionMap.values())
+			{
+				try
+				{
+					statement.close();
+				}
+				catch(SQLException exception)
+				{
+					exception.printStackTrace();
+				}
+			}
+			
+			_connectionMap.clear();		
+		}
+	}
+	
 	public void setConnection(Connection connection)
-	throws SQLException
 	{
 		_threadConnections.set(connection);
 	}
@@ -80,31 +99,35 @@ implements Collection<Element>
 		}
 	}
 	
-	private static final int TABLEEXISTS = getUniqueRandom();
+	private static final int PS_TABLEEXISTS = getUniqueRandom();
 	
 	private boolean tableExists()
 	throws SQLException
 	{
 		PreparedStatement statement = getPreparedStatement
 		(
-			TABLEEXISTS,
-			"SELECT name from sqlite_master WHERE type = 'table' AND name = ?"
+			PS_TABLEEXISTS,
+			"SELECT 1 from sqlite_master WHERE type LIKE 'table' AND name LIKE ?"
 		);
 		
-		try
+		synchronized(statement)
 		{
 			statement.setString(1, getSQLTableName());
 			ResultSet result = statement.executeQuery();
 			
-			//attemt to select the first line
-			if(!result.next())
-				return false;
-			
-			return result.getString(1) != null; //when this succeeds we have at least one row
-		}
-		finally
-		{
-			finallyCloseStatement(statement);
+			try
+			{
+				//attemt to select the first line
+				if(!result.next())
+					return false;
+				
+				result.getInt(1);
+				return !result.wasNull(); //when this succeeds we have at least one row
+			}
+			finally
+			{
+				result.close();
+			}
 		}
 	}
 	
@@ -285,7 +308,13 @@ implements Collection<Element>
 	throws SQLException
 	{
 		getConnection().rollback();
-	}	
+	}
+	
+	protected void rollback(Savepoint savepoint)
+	throws SQLException
+	{
+		getConnection().rollback(savepoint);
+	}
 	
 	protected PreparedStatement getPreparedStatement(int key, String sql)
 	throws SQLException
@@ -388,6 +417,11 @@ implements Collection<Element>
 				return statement.executeQuery();
 			}
 		}
+		catch(RuntimeException exception)
+		{
+			finallyCloseStatement(statement);
+			throw exception;
+		}
 		catch(SQLException exception)
 		{
 			finallyCloseStatement(statement);
@@ -405,12 +439,26 @@ implements Collection<Element>
 	throws SQLException
 	{
 		Statement statement = getConnection().createStatement();
-		return statement.executeQuery
-		(
-			"SELECT " + getSQLFields() + " " +
-			"FROM " + getSQLTableName() + " " +
-			"WHERE " + where
-		);
+		
+		try
+		{
+			return statement.executeQuery
+			(
+				"SELECT " + getSQLFields() + " " +
+				"FROM " + getSQLTableName() + " " +
+				"WHERE " + where
+			);
+		}
+		catch(RuntimeException exception)
+		{
+			finallyCloseStatement(statement);
+			throw exception;
+		}
+		catch(SQLException exception)
+		{
+			finallyCloseStatement(statement);
+			throw exception;
+		}
 	}
 	
 	protected abstract String getSQLFields();

@@ -1,5 +1,6 @@
 package org.ron.servlet;
 
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -12,12 +13,13 @@ import javax.vecmath.Vector2f;
 public class SegmentDatabase
 extends AbstractDatabase<Segment>
 {
-	private static final String SQLFIELDS = "ID, PLAYERID, START_LAT, START_LNG, END_LAT, END_LNG, TIME";
-	private static final String SQLTABLENAME = "SEGMENT";
-	private static final String SQLORDER = "ID ASC";
+	public static final String SQLIDCOLUMN = "ID";
+	private static final String SQLFIELDS = SQLIDCOLUMN + ", PLAYERID, START_LAT, START_LNG, END_LAT, END_LNG, TIME";
+	public static final String SQLTABLENAME = "SEGMENT";
+	private static final String SQLORDER = SQLIDCOLUMN + " ASC";
 	
-	private NodeDatabase _nodes;
-	private ViewDatabase _views;
+	private final NodeDatabase _nodes;
+	private final ViewDatabase _views;
 	
 	public SegmentDatabase(NodeDatabase nodes)
 	throws SQLException
@@ -26,6 +28,8 @@ extends AbstractDatabase<Segment>
 		_nodes = nodes;
 		
 		_views = new ViewDatabase(_nodes);
+		
+		setConnection(_nodes.getConnection());
 	}
 	
 	@Override
@@ -34,7 +38,7 @@ extends AbstractDatabase<Segment>
 	{
 		execute
 		(
-			"CREATE TABLE " + SQLTABLENAME + " " +
+			"CREATE TABLE IF NOT EXISTS " + SQLTABLENAME + " " +
 			"(" +
 				"ID INTEGER PRIMARY KEY NOT NULL," +
 				"PLAYERID INTEGER NOT NULL," +
@@ -42,9 +46,10 @@ extends AbstractDatabase<Segment>
 				"START_LNG REAL NOT NULL," +
 				"END_LAT REAL NOT NULL," +
 				"END_LNG REAL NOT NULL," +
-				"TIME INT NOT NULL" +
+				"TIME INT NOT NULL," +
+				"FOREIGN KEY (PLAYERID) REFERENCES " + PlayerDatabase.SQLTABLENAME + "(" + PlayerDatabase.SQLIDCOLUMN + ")" +
 			")"
-		);
+		);	
 	}
 	
 	public ViewDatabase getViews()
@@ -102,6 +107,15 @@ extends AbstractDatabase<Segment>
 	{
 		return SQLORDER;
 	}
+	
+	@Override
+	public void setConnection(Connection connection)
+	{
+		if(_views != null)
+			_views.setConnection(connection);
+		
+		super.setConnection(connection);
+	}
 
 	@Override
 	public boolean add(Segment segment)
@@ -125,11 +139,14 @@ extends AbstractDatabase<Segment>
 	public boolean add(float startLat, float startLng, float endLat, float endLng)
 	throws SQLException
 	{
+		Savepoint save = getConnection().setSavepoint();
+		/*
 		boolean autoCommit = getConnection().getAutoCommit();
 		getConnection().setAutoCommit(false);
+		*/
 		
 		PreparedStatement statement = null;
-		boolean commited = false;
+		//boolean commited = false;
 		
 		try
 		{
@@ -150,7 +167,6 @@ extends AbstractDatabase<Segment>
 				statement.setFloat(5, Calendar.getInstance().get(Calendar.SECOND));
 						
 				statement.executeUpdate();
-				finallyCloseStatement(statement);
 			}
 			
 			statement = getPreparedStatement
@@ -172,21 +188,41 @@ extends AbstractDatabase<Segment>
 				statement.setFloat(3, endLat);
 				statement.setFloat(4, endLng);
 				ResultSet result = statement.executeQuery();
-				result.next();
 				
-				getId(result);
+				try
+				{
+					result.next();
+				
+					getId(result);
+				}
+				finally
+				{
+					result.close();
+				}
 			}
 			
-			commited = commit();
+			//commited = commit();
 			return true;
+		}
+		catch(SQLException exception)
+		{
+			rollback(save);
+			throw exception;
+		}
+		catch(RuntimeException exception)
+		{
+			rollback(save);
+			throw exception;
 		}
 		finally
 		{
+			/*
 			if(!commited)
 				rollback();
 			
 			getConnection().setAutoCommit(autoCommit);
-			finallyCloseStatement(statement);			
+			*/
+			getConnection().releaseSavepoint(save);
 		}
 	}
 	
@@ -261,19 +297,18 @@ extends AbstractDatabase<Segment>
 		
 		synchronized(statement)
 		{
+			statement.setInt(1, player.getId());
+			ResultSet result = statement.executeQuery();
+			
 			try
-			{
-				statement.setInt(1, player.getId());
-				
-				ResultSet result = statement.executeQuery();
-				
+			{		
 				result.next();
 				
 				return result.getInt(1);
 			}
 			finally
 			{
-				finallyCloseStatement(statement);
+				result.close();
 			}
 		}
 	}
@@ -323,19 +358,22 @@ extends AbstractDatabase<Segment>
 
 				ResultSet result = statement.executeQuery();
 				
-				if(!result.next())
-					return false; //we don't have any result
-				
-				return result.getString(1) != null;
+				try
+				{					
+					if(!result.next())
+						return false; //we don't have any result
+					
+					return result.getString(1) != null;
+				}
+				finally
+				{
+					result.close();
+				}
 			}
 		}
 		catch(SQLException exception)
 		{
 			throw wrapInRuntimeException(exception);
-		}
-		finally
-		{
-			finallyCloseStatement(statement);
 		}
 	}
 

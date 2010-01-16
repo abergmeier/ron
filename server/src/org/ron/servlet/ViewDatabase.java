@@ -69,14 +69,16 @@ extends AbstractDatabase<ViewSegment>
 	{
 		execute
 		(
-			"CREATE TABLE " + SQLTABLENAME + " " +
+			"CREATE TABLE IF NOT EXISTS " + SQLTABLENAME + " " +
 			"(" +
-				"PLAYERID INTEGER NOT NULL" +
+				"PLAYERID INTEGER NOT NULL," +
 				"SEGMENTID INTEGER NOT NULL," + 
 				"START_LAT REAL NULL," +
 				"START_LNG REAL NULL," +
-				"END_LAT REAL NULL" +
-				"END_LNG REAL NULL" +
+				"END_LAT REAL NULL," +
+				"END_LNG REAL NULL," +
+				"FOREIGN KEY (PLAYERID) REFERENCES " + PlayerDatabase.SQLTABLENAME + "(" + PlayerDatabase.SQLIDCOLUMN + ")," +
+				"FOREIGN KEY (SEGMENTID) REFERENCES " + SegmentDatabase.SQLTABLENAME + "(" + SegmentDatabase.SQLIDCOLUMN + ")" +
 			");"
 		);
 	}
@@ -284,30 +286,33 @@ extends AbstractDatabase<ViewSegment>
 				"PLAYERID = ? AND SEGMENTID = ?"
 		);
 		
-		try
+		synchronized(statement)
 		{
 			statement.setInt(1, playerId);
 			statement.setInt(2, segmentId);
-			
+
 			ResultSet result = statement.executeQuery();
 			
-			if(!result.next())
-				return false;
-			
-			//TODO: check for NULL!
-			
-			//when latitudes are not set - the whole segment
-			//is in view
-			
-			return getStartLatitude(result) == Float.NaN
-			&& getStartLongitude(result) == Float.NaN
-			&& getEndLatitude(result) == Float.NaN
-			&& getEndLongitude(result) == Float.NaN;
+			try
+			{
+				if(!result.next())
+					return false;
+				
+				//TODO: check for NULL!
+				
+				//when latitudes are not set - the whole segment
+				//is in view
+				
+				return getStartLatitude(result) == Float.NaN
+				&& getStartLongitude(result) == Float.NaN
+				&& getEndLatitude(result) == Float.NaN
+				&& getEndLongitude(result) == Float.NaN;
+			}
+			finally
+			{
+				result.close();
+			}
 		}
-		finally
-		{
-			finallyCloseStatement(statement);
-		}		
 	}
 
 	@Override
@@ -318,9 +323,10 @@ extends AbstractDatabase<ViewSegment>
 		
 		int size = 0;
 		
+		ResultSet result = null;
 		try
 		{
-			ResultSet result = getWhere(buildWhere((Collection<ViewSegment>)collection));
+			result = getWhere(buildWhere((Collection<ViewSegment>)collection));
 			
 			for(; result.next(); size++)
 			{
@@ -329,6 +335,10 @@ extends AbstractDatabase<ViewSegment>
 		catch(SQLException exception)
 		{
 			throw wrapInRuntimeException(exception);
+		}
+		finally
+		{
+			finallyCloseStatement(result);
 		}
 		
 		return size == collection.size();
