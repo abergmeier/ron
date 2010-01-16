@@ -1,0 +1,450 @@
+package org.ron.servlet;
+
+import java.sql.Array;
+import java.sql.Blob;
+import java.sql.CallableStatement;
+import java.sql.Clob;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.NClob;
+import java.sql.PreparedStatement;
+import java.sql.SQLClientInfoException;
+import java.sql.SQLException;
+import java.sql.SQLWarning;
+import java.sql.SQLXML;
+import java.sql.Savepoint;
+import java.sql.Statement;
+import java.sql.Struct;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Stack;
+
+public class SQLiteConnection
+implements Connection
+{
+	private final Stack<Savepoint> _savePointStack = new Stack<Savepoint>();
+	private final Connection _inner;
+	
+/*	
+	private final PreparedStatement _releaseSavepoint;
+	private final PreparedStatement _createSavepoint;
+	private final PreparedStatement _rollbackSavepoint;
+*/
+	
+	public SQLiteConnection(Connection connection)
+	throws SQLException
+	{
+		_inner = connection;
+/*		
+		_releaseSavepoint = prepareStatement("RELEASE SAVEPOINT ?");
+		_createSavepoint = prepareStatement("SAVEPOINT ?");
+		_rollbackSavepoint = prepareStatement("ROLLBACK TO SAVEPOINT ?");
+*/
+	}
+
+	@Override
+	public void clearWarnings()
+	throws SQLException
+	{
+		_inner.clearWarnings();		
+	}
+
+	@Override
+	public void close()
+	throws SQLException
+	{
+		_inner.close();		
+	}
+
+	@Override
+	public void commit()
+	throws SQLException
+	{
+		_inner.commit();		
+	}
+
+	@Override
+	public Array createArrayOf(String typeName, Object[] elements)
+	throws SQLException
+	{
+		return _inner.createArrayOf(typeName, elements);
+	}
+
+	@Override
+	public Blob createBlob()
+	throws SQLException
+	{
+		return _inner.createBlob();
+	}
+
+	@Override
+	public Clob createClob()
+	throws SQLException
+	{
+		return _inner.createClob();
+	}
+
+	@Override
+	public NClob createNClob()
+	throws SQLException
+	{
+		return _inner.createNClob();
+	}
+
+	@Override
+	public SQLXML createSQLXML()
+	throws SQLException
+	{
+		return _inner.createSQLXML();
+	}
+
+	@Override
+	public Statement createStatement()
+	throws SQLException
+	{
+		return _inner.createStatement();
+	}
+
+	@Override
+	public Statement createStatement(int resultSetType, int resultSetConcurrency)
+	throws SQLException
+	{
+		return _inner.createStatement(resultSetType, resultSetConcurrency);
+	}
+
+	@Override
+	public Statement createStatement(int resultSetType,
+			int resultSetConcurrency, int resultSetHoldability)
+	throws SQLException
+	{
+		return _inner.createStatement(resultSetType, resultSetConcurrency, resultSetHoldability);
+	}
+
+	@Override
+	public Struct createStruct(String typeName, Object[] attributes)
+	throws SQLException
+	{
+		return _inner.createStruct(typeName, attributes);
+	}
+
+	@Override
+	public boolean getAutoCommit()
+	throws SQLException
+	{
+		return _savePointStack.size() == 0;
+	}
+
+	@Override
+	public String getCatalog()
+	throws SQLException
+	{
+		return _inner.getCatalog();
+	}
+
+	@Override
+	public Properties getClientInfo()
+	throws SQLException
+	{
+		return _inner.getClientInfo();
+	}
+
+	@Override
+	public String getClientInfo(String name)
+	throws SQLException
+	{
+		return _inner.getClientInfo(name);
+	}
+
+	@Override
+	public int getHoldability()
+	throws SQLException
+	{
+		return _inner.getHoldability();
+	}
+
+	@Override
+	public DatabaseMetaData getMetaData()
+	throws SQLException
+	{
+		return _inner.getMetaData();
+	}
+
+	@Override
+	public int getTransactionIsolation()
+	throws SQLException
+	{
+		return _inner.getTransactionIsolation();
+	}
+
+	@Override
+	public Map<String, Class<?>> getTypeMap()
+	throws SQLException
+	{
+		return _inner.getTypeMap();
+	}
+
+	@Override
+	public SQLWarning getWarnings()
+	throws SQLException
+	{
+		return _inner.getWarnings();
+	}
+
+	@Override
+	public boolean isClosed()
+	throws SQLException
+	{
+		return _inner.isClosed();
+	}
+
+	@Override
+	public boolean isReadOnly()
+	throws SQLException
+	{
+		return _inner.isReadOnly();
+	}
+
+	@Override
+	public boolean isValid(int timeout)
+	throws SQLException
+	{
+		return _inner.isValid(timeout);
+	}
+
+	@Override
+	public String nativeSQL(String sql)
+	throws SQLException
+	{
+		return _inner.nativeSQL(sql);
+	}
+
+	@Override
+	public CallableStatement prepareCall(String sql)
+	throws SQLException
+	{
+		return _inner.prepareCall(sql);
+	}
+
+	@Override
+	public CallableStatement prepareCall(String sql, int resultSetType,
+			int resultSetConcurrency)
+	throws SQLException
+	{
+		return _inner.prepareCall(sql, resultSetType, resultSetConcurrency);
+	}
+
+	@Override
+	public CallableStatement prepareCall(String sql, int resultSetType,
+			int resultSetConcurrency, int resultSetHoldability)
+	throws SQLException
+	{
+		return _inner.prepareCall(sql, resultSetType, resultSetConcurrency, resultSetHoldability);
+	}
+
+	@Override
+	public PreparedStatement prepareStatement(String sql)
+	throws SQLException
+	{
+		return _inner.prepareStatement(sql);
+	}
+
+	@Override
+	public PreparedStatement prepareStatement(String sql, int autoGeneratedKeys)
+	throws SQLException
+	{
+		return _inner.prepareStatement(sql, autoGeneratedKeys);
+	}
+
+	@Override
+	public PreparedStatement prepareStatement(String sql, int[] columnIndexes)
+	throws SQLException
+	{
+		return _inner.prepareStatement(sql, columnIndexes);
+	}
+
+	@Override
+	public PreparedStatement prepareStatement(String sql, String[] columnNames)
+	throws SQLException
+	{
+		return _inner.prepareStatement(sql, columnNames);
+	}
+
+	@Override
+	public PreparedStatement prepareStatement(String sql, int resultSetType,
+			int resultSetConcurrency)
+	throws SQLException
+	{
+		return _inner.prepareStatement(sql, resultSetType, resultSetConcurrency);
+	}
+
+	@Override
+	public PreparedStatement prepareStatement(String sql, int resultSetType,
+			int resultSetConcurrency, int resultSetHoldability)
+	throws SQLException
+	{
+		return _inner.prepareStatement(sql, resultSetType, resultSetConcurrency, resultSetHoldability);
+	}
+
+	@Override
+	public void releaseSavepoint(Savepoint savepoint)
+	throws SQLException
+	{
+		synchronized(_savePointStack)
+		{
+			if(!_savePointStack.peek().equals(savepoint))
+				throw new SQLException("A nested savepoint seems to exist - remove it first");
+			
+			/*
+			Statement releaseSavepoint = createStatement();
+			releaseSavepoint.execute("RELEASE SAVEPOINT " + savepoint.getSavepointName());
+			*/
+			
+			_savePointStack.pop();
+		}
+	}
+
+	@Override
+	public void rollback()
+	throws SQLException
+	{
+		throw new UnsupportedOperationException();		
+	}
+
+	@Override
+	public void rollback(Savepoint savepoint)
+	throws SQLException
+	{
+		synchronized(_savePointStack)
+		{
+			if(!_savePointStack.contains(savepoint))
+				throw new SQLException("Savepoint " + savepoint.getSavepointName() + " not on this connection");
+			
+			//keep internal stack synced
+			while(!_savePointStack.peek().equals(savepoint))
+			{
+				_savePointStack.pop();
+			}
+			
+			/*
+			Statement rollbackSavepoint = createStatement();
+			rollbackSavepoint.execute("ROLLBACK TO SAVEPOINT " + savepoint.getSavepointName());
+			*/
+		}
+	}
+
+	@Override
+	public void setAutoCommit(boolean autoCommit)
+	throws SQLException
+	{
+		throw new UnsupportedOperationException("setAutoCommit not supported");		
+	}
+
+	@Override
+	public void setCatalog(String catalog)
+	throws SQLException
+	{
+		_inner.setCatalog(catalog);
+	}
+
+	@Override
+	public void setClientInfo(Properties properties)
+	throws SQLClientInfoException
+	{
+		_inner.setClientInfo(properties);
+	}
+
+	@Override
+	public void setClientInfo(String name, String value)
+	throws SQLClientInfoException
+	{
+		_inner.setClientInfo(name, value);
+	}
+
+	@Override
+	public void setHoldability(int holdability)
+	throws SQLException
+	{
+		_inner.setHoldability(holdability);
+	}
+
+	@Override
+	public void setReadOnly(boolean readOnly)
+	throws SQLException
+	{
+		_inner.setReadOnly(readOnly);
+	}
+
+	private int _savepointCounter = 0;
+	
+	@Override
+	public Savepoint setSavepoint()
+	throws SQLException
+	{
+		return setSavepoint("savept_" + ++_savepointCounter);
+	}
+	
+	private class SQLiteSavepoint
+	implements Savepoint
+	{
+		private final String _name;
+		public SQLiteSavepoint(String name)
+		{
+			_name = name;
+		}
+		
+		@Override
+		public String getSavepointName()
+		throws SQLException
+		{
+			return _name;
+		}
+		
+		@Override
+		public int getSavepointId()
+		throws SQLException
+		{
+			throw new SQLException("Is named!");
+		}
+	};
+
+	@Override
+	public Savepoint setSavepoint(String name)
+	throws SQLException
+	{
+		/*Statement createSavepoint = createStatement();
+		createSavepoint.executeQuery("SAVEPOINT " + name + ";");
+		*/
+		SQLiteSavepoint savepoint = new SQLiteSavepoint(name);
+		_savePointStack.push(savepoint);
+		
+		return savepoint;		
+	}
+
+	@Override
+	public void setTransactionIsolation(int level)
+	throws SQLException
+	{
+		_inner.setTransactionIsolation(level);
+	}
+
+	@Override
+	public void setTypeMap(Map<String, Class<?>> map)
+	throws SQLException
+	{
+		_inner.setTypeMap(map);		
+	}
+
+	@Override
+	public boolean isWrapperFor(Class<?> iface)
+	throws SQLException
+	{
+		return _inner.isWrapperFor(iface);
+	}
+
+	@Override
+	public <T> T unwrap(Class<T> iface)
+	throws SQLException
+	{
+		return _inner.unwrap(iface);
+	}
+}
