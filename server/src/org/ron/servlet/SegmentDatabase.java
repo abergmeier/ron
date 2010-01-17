@@ -57,7 +57,7 @@ extends AbstractDatabase<Segment>
 	protected Segment get(ResultSet result)
 	throws SQLException
 	{
-		return new Segment
+		return new SegmentImpl
 		(
 			getSegmentId(result),
 			_nodes.get(getSegmentStartNodeId(result)),
@@ -69,7 +69,7 @@ extends AbstractDatabase<Segment>
 	protected Segment get(int segmentId, int playerid, int startNodeId, float startLatitude, float startLongitude, int endNodeId, float endLatitude, float endLongitude, int time)
 	throws SQLException
 	{
-		return new Segment
+		return new SegmentImpl
 		(
 			segmentId,
 			_nodes.get(playerid, startNodeId, startLatitude, startLongitude),
