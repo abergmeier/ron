@@ -13,12 +13,12 @@
 			function Simulation()
 			{
 				var player1Positions = new Object();
-				player1Positions[1] = new google.maps.LatLng(53.089062, 8.785372);
-				player1Positions[3] = new google.maps.LatLng(53.090448, 8.789685);
-				player1Positions[7] = new google.maps.LatLng(53.088898, 8.790016);
-				player1Positions[14] = new google.maps.LatLng(53.088499, 8.792035);
-				player1Positions[15] = new google.maps.LatLng(53.089146, 8.792739);
-				player1Positions[19] = new google.maps.LatLng(53.090638, 8.791516);
+				player1Positions[0 * 1000] = new google.maps.LatLng(53.089062, 8.785372);
+				player1Positions[3 * 1000] = new google.maps.LatLng(53.090448, 8.789685);
+				player1Positions[7 * 1000] = new google.maps.LatLng(53.088898, 8.790016);
+				player1Positions[14 * 1000] = new google.maps.LatLng(53.088499, 8.792035);
+				player1Positions[15 * 1000] = new google.maps.LatLng(53.089146, 8.792739);
+				player1Positions[19 * 1000] = new google.maps.LatLng(53.090638, 8.791516);
 				
 				var player2Positions = new Object();				
 				var player3Positions = new Object();
@@ -33,9 +33,9 @@
 				);
 
 				var player1Nodes = new Object();
-				player1Nodes[2] = true;
-				player1Nodes[6] = true;
-				player1Nodes[10] = true;
+				player1Nodes[2 * 1000] = true;
+				player1Nodes[6 * 1000] = true;
+				player1Nodes[10 * 1000] = true;
 
 				var player2Nodes = new Object();
 				var player3Nodes = new Object();
@@ -82,7 +82,7 @@
 						{					
 							functionName(wrapper);
 						},
-						parseInt(seconds) * 1000
+						parseInt(seconds)
 					);
 				}
 					
