@@ -159,15 +159,7 @@ extends XmlRpcServlet
 		_players.getNodes().addForPlayerPosition(player);
 		return true;
 	}
-	
-	public boolean removeNode(double lat, double lng)
-	throws SQLException, ClassNotFoundException
-	{
-		NodeDatabase _database = _players.getNodes();
-		_database.remove(_database.get((float)lat, (float)lng));
-		return true;
-	}
-	
+		
 	public String updateState(int playerId, double lat, double lng)
 	throws SQLException, ClassNotFoundException
 	{
