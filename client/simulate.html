@@ -53,10 +53,18 @@
 			Simulation.prototype.onClick = function()
 			{
 				var nodes = this._playerNodes[getPlayer().getId() - 1];
+				var node;
 
 				for(var seconds in nodes)
 				{
-					submitPoint();
+					self.setTimeout
+					(
+						function()
+						{
+							submitPoint();
+						},
+						parseInt(seconds)		
+					);					
 				} 
 			};
 
