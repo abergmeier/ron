@@ -179,7 +179,7 @@ implements Set<Player>
 	protected Player get(ResultSet result)
 	throws SQLException
 	{
-		return new Player(getPlayerId(result), this);
+		return get(getPlayerId(result));
 	}
 	
 	private static final int BIT_LOST = 1 << 0;
@@ -267,7 +267,7 @@ implements Set<Player>
 	throws SQLException
 	{
 		//TODO: check for existance
-		return new Player(playerId, this);
+		return new PlayerImpl(playerId, this);
 	}
 	
 	protected int getPlayerBits(ResultSet result)
@@ -365,7 +365,7 @@ implements Set<Player>
 				finallyCloseStatement(result);
 			}
 			
-			return new Player(id, this);
+			return get(id);
 		}
 		catch(SQLException exception)
 		{
