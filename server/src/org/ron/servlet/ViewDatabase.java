@@ -41,13 +41,13 @@ extends AbstractDatabase<ViewSegment>
 				continue; //already at device
 			
 			//we actually have to test now
-			succeeded = Collision.GetIntersections(player.getLatitude(), player.getLongitude(), segment.getStart(), segment.getEnd(), collidingVectors);
+			succeeded = Collision.GetIntersections(player.getLatitude(), player.getLongitude(), segment.getStart().toVector(), segment.getEnd().toVector(), collidingVectors);
 			
 			if(!succeeded)
 				continue; //no intersection
 			
-			buffer[0] = segment.getStart();
-			buffer[1] = segment.getEnd();
+			buffer[0] = segment.getStart().toVector();
+			buffer[1] = segment.getEnd().toVector();
 			
 			if(Arrays.equals(collidingVectors, buffer))
 			{

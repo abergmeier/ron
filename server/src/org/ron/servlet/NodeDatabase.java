@@ -245,7 +245,7 @@ implements Set<Node>
 	protected Node get(int playerId, int nodeId, float latitude, float longitude)
 	throws SQLException
 	{
-		return new Node(_players.get(playerId), nodeId, latitude, longitude);
+		return new NodeImpl(_players.get(playerId), nodeId, latitude, longitude);
 	}
 	
 	protected Node get(int id)

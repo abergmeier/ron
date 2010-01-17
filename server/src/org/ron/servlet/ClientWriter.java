@@ -36,8 +36,8 @@ public class ClientWriter
 	{
 		_isPartial = false;
 		_segmentId = segment.getId();
-		_start = segment.getStart();
-		_end = segment.getEnd();		
+		_start = segment.getStart().toVector();;
+		_end = segment.getEnd().toVector();		
 	}
 	
 	public void add(Segment segment, Vector2f start, Vector2f end)
