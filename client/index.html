@@ -13,12 +13,12 @@
 			function Simulation()
 			{
 				var player1Positions = new Object();
-				player1Positions[1] = new google.maps.LatLng(53.089062, 8.785372);
-				player1Positions[3] = new google.maps.LatLng(53.090448, 8.789685);
-				player1Positions[7] = new google.maps.LatLng(53.088898, 8.790016);
-				player1Positions[14] = new google.maps.LatLng(53.088499, 8.792035);
-				player1Positions[15] = new google.maps.LatLng(53.089146, 8.792739);
-				player1Positions[19] = new google.maps.LatLng(53.090638, 8.791516);
+				player1Positions[0 * 1000] = new google.maps.LatLng(53.089062, 8.785372);
+				player1Positions[3 * 1000] = new google.maps.LatLng(53.090448, 8.789685);
+				player1Positions[7 * 1000] = new google.maps.LatLng(53.088898, 8.790016);
+				player1Positions[14 * 1000] = new google.maps.LatLng(53.088499, 8.792035);
+				player1Positions[15 * 1000] = new google.maps.LatLng(53.089146, 8.792739);
+				player1Positions[19 * 1000] = new google.maps.LatLng(53.090638, 8.791516);
 				
 				var player2Positions = new Object();				
 				var player3Positions = new Object();
@@ -33,9 +33,9 @@
 				);
 
 				var player1Nodes = new Object();
-				player1Nodes[2] = true;
-				player1Nodes[6] = true;
-				player1Nodes[10] = true;
+				player1Nodes[2 * 1000] = true;
+				player1Nodes[6 * 1000] = true;
+				player1Nodes[10 * 1000] = true;
 
 				var player2Nodes = new Object();
 				var player3Nodes = new Object();
@@ -53,36 +53,45 @@
 			Simulation.prototype.onClick = function()
 			{
 				var nodes = this._playerNodes[getPlayer().getId() - 1];
+				var node;
 
 				for(var seconds in nodes)
 				{
-					submitPoint();
+					self.setTimeout
+					(
+						function()
+						{
+							submitPoint();
+						},
+						parseInt(seconds)		
+					);					
 				} 
 			};
 
+			function functionDelegate(functionName, lat, lng)
+			{
+				var wrapper = new Object();
+				wrapper.coords = new Object();
+				wrapper.coords.latitude = parseFloat(lat);
+				wrapper.coords.longitude = parseFloat(lng);
+				
+				functionName.call(self, wrapper);
+			}
+			
 			Simulation.prototype.watchPosition = function(functionName)
 			{
 				var len = this._playerPositions;
 				var positions = this._playerPositions[getPlayer().getId() - 1];
 				
-				var position;
-				var wrapper;
+				//var position;
+				//var wrapper;
 				
 				for(var seconds in positions)
 				{
-					position = positions[seconds];
-					wrapper = new Object();
-					wrapper.coords = new Object();
-					wrapper.coords.latitude = position.lat();
-					wrapper.coords.longitude = position.lng();
-					
 					self.setTimeout
 					(
-						function()
-						{					
-							functionName(wrapper);
-						},
-						parseInt(seconds) * 1000
+						"functionDelegate(" + functionName + "," + positions[seconds].lat() + "," + positions[seconds].lng() + ");",
+						parseInt(seconds)
 					);
 				}
 					
@@ -94,7 +103,7 @@
 			//use object for associative array - works better
 			var _players = new Object();
 			_players.length = 0;
-			var colors = new Array("black", "blue", "red", "yellow", "green", "cyan");
+			var colors = new Array("#000000", "#0000FF", "#FF0000", "#FFFF00", "00FF00");
 
 			var _playerId;
 
@@ -105,72 +114,75 @@
 				this.Player = player;
 				this.Partials = new Array();
 				this.PolyLine = null;
+			};
 
-				function removePartials()
-				{
-					//remove all polylines
-					var last;
-					while(last = this.Partials.pop())
-					{
-						last.setMap(null);
-					}
-
-					//we no longer need the array
-					this.Partials = null;
-				}
-
-				function set(startLat, startLng, endLat, endLng)
-				{
-					var start = new google.maps.LatLng(startLat, startLng);
-					var end = new google.maps.LatLng(endLat, endLng);
+			Line.prototype.removePartials = function()
+			{
+				if(!this.Partials)
+					return; //already removed
 					
-					this.PolyLine = new google.maps.Polyline
-					(
-						{
-				       		path:[start, end],
-				       		strokeColor: this.Player.Color,
-				       		strokeOpacity: 1.0,
-				       		strokeWeight: 2
-						}
-					);
-					this.PolyLine.setMap(_map);
-
-					removePartials();
-
-					//make sure line is displayed
-					fitBounds(start);
-					fitBounds(end);
-				}
-
-				function setPartial(startLat, startLng, endLat, endLng)
+				//remove all polylines
+				var last;
+				while(last = this.Partials.pop())
 				{
-					if(!isPartial())
-						return; //we already have the whole line
-
-					var start = new google.maps.LatLng(startLat, startLng);
-					var end = new google.maps.LatLng(endLat, endLng);
-						
-					var polyLine = new google.maps.Polyline
-					(
-						{
-				       		path:[start, end],
-				       		strokeColor: this.Player.Color,
-				       		strokeOpacity: 1.0,
-				       		strokeWeight: 2
-				       	}
-					);
-					polyline.setMap(_map);
-					this.Partials.push(polyline);
-
-					//make sure partials are displayed
-					fitBounds(start);
-					fitBounds(end);
+					last.setMap(null);
 				}
 
-				function isPartial()
-				{
-					return this.PolyLine == null;
-				}
+				//we no longer need the array
+				this.Partials = null;
+			};
+
+			Line.prototype.set = function(startLat, startLng, endLat, endLng)
+			{
+				var start = new google.maps.LatLng(startLat, startLng);
+				var end = new google.maps.LatLng(endLat, endLng);
+			
+				this.PolyLine = new google.maps.Polyline
+				(
+					{
+			       		path:[start, end],
+			       		strokeColor: this.Player.Color,
+			       		strokeOpacity: 1.0,
+			       		strokeWeight: 3
+					}
+				);
+				this.PolyLine.setMap(_map);
+
+				this.removePartials();
+
+				//make sure line is displayed
+				fitBounds(start);
+				fitBounds(end);
+			};
+
+			Line.prototype.setPartial = function(startLat, startLng, endLat, endLng)
+			{
+				if(!isPartial())
+					return; //we already have the whole line
+
+				var start = new google.maps.LatLng(startLat, startLng);
+				var end = new google.maps.LatLng(endLat, endLng);
+					
+				var polyLine = new google.maps.Polyline
+				(
+					{
+			       		path:[start, end],
+			       		strokeColor: this.Player.Color,
+			       		strokeOpacity: 1.0,
+			       		strokeWeight: 2
+			       	}
+				);
+				polyline.setMap(_map);
+				this.Partials.push(polyline);
+
+				//make sure partials are displayed
+				fitBounds(start);
+				fitBounds(end);
+			};
+
+			Line.prototype.isPartial = function()
+			{
+				return this.PolyLine == null;
 			}
 
 			function Player(player_name, player_id)
@@ -234,8 +246,8 @@
 			//save the last servertime of a received update
 			var lastServerTime;
 			var lastServerPosition = new Array(0, 0);
-			var marker;
-			var bounds;
+			var _marker;
+			var _bounds;
 
 			var _watchID;
 			
@@ -279,35 +291,38 @@
 
 				var myLatLng = new google.maps.LatLng(lat, lng);
 
-				if(marker)
-					marker.setPosition(myLatLng);
-				else
+				if(_marker)
+					_marker.setPosition(myLatLng);
+ 				else
 				{
-					var player = getPlayer();
-					marker = new google.maps.Marker
+					_marker = new google.maps.Marker
 					({
       						position: myLatLng, 
-      						map: _map, 
-						title: player.Name + "s Position"
+							map: _map, 
+							title: getPlayer().Name + "s Position"
 					});
 				}
 
 				//make sure marker is displayed
-				fitBounds(myLatLng);
+				_map.panTo(myLatLng);
 			}
 		
 			function submitPoint()
 			{
-				if(!marker)
+				if(!_marker)
 					return;
 
-				callRPCMethod("addNode", getPlayer().getId());
+				var response = callRPCMethod("addNode", getPlayer().getId());
 
-				var myLatLng = new google.maps.LatLng(lat, lng);
-				//make sure marker is displayed
-				fitBounds(myLatLng);
-				//display the just submitted points
-				displayPoints(playerId, lastServerPosition[0], lastServerPosition[1]);
+				if(!response || !response[0])
+					return; //TODO: handle properly
+
+				var segmentArray = response[0];
+
+				if(!segmentArray.length)
+					return; //no segment yet
+				
+				getPlayer().addLine(segmentArray[0], segmentArray[1], segmentArray[2], segmentArray[3], segmentArray[4]);
 			}
 		
 			/*function displayPoints(player_id)
@@ -336,11 +351,14 @@
 			
 			function createXml(markup)
 			{
+				if(!markup)
+					return null;
+				
 				var doc;
 
 				if(window.DOMParser)
 				{
-					var parser= new DOMParser();
+					var parser = new DOMParser();
 					doc = parser.parseFromString(markup, "text/xml");
 				}
 				else
@@ -356,7 +374,8 @@
 			
 			function fitBounds(latLng)
 			{
-				bounds.extend(latLng);
+				_bounds.extend(latLng);
+				_map.fitBounds(_bounds);
 			}
 
 			function callForAll(player, elements, callback)
@@ -398,10 +417,10 @@
 		
 			function getPoints()
 			{
-				if(!marker)
+				if(!_marker)
 					return; //we cannot do anything without a position
 				
-				var position = marker.getPosition();
+				var position = _marker.getPosition();
 
 				var playerId = getPlayer().getId();
 
@@ -411,13 +430,16 @@
 				else
 					responseParameters = callRPCMethod("updateState", playerId, position.lat(), position.lng());
 
-				if(!responseParameters)
+				if(!responseParameters || !responseParameters.length)
 					return; //TODO: problem handling
 
 				lastServerPosition[0] = position.lat(); 
 				lastServerPosition[1] = position.lng();
 
 				var responseDocument = createXml(responseParameters[0]);
+
+				if(!responseDocument)
+					return; //TODO: handle problem
 				
 				var stateElement = responseDocument.getElementsByTagName("state")[0];
 
@@ -552,7 +574,7 @@
 							keyboardShortcuts: false,
 							scrollwheel: false,
 							mapTypeControl: false,
-							zoom: 5,
+							zoom: 10,
 							center: myLatLng,
 							mapTypeId: google.maps.MapTypeId.ROADMAP
 						};
@@ -560,8 +582,8 @@
 						_map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
 
 						//make sure current position is displayed
-						bounds = new google.maps.LatLngBounds(myLatLng, myLatLng);
-						_map.fitBounds(bounds);
+						_bounds = new google.maps.LatLngBounds(myLatLng, myLatLng);
+						_map.fitBounds(_bounds);
 						
 						updatePosition(position);
 
