@@ -68,7 +68,8 @@ implements Collection<Element>
 				}
 				catch(SQLException exception)
 				{
-					exception.printStackTrace();
+					if(!exception.getMessage().startsWith("Already closed"))
+						exception.printStackTrace();
 				}
 			}
 			
