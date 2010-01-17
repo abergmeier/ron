@@ -17,6 +17,11 @@ implements Position
 		_id = id;
 	}
 	
+	public int getId()
+	{
+		return _id;
+	}
+	
 	public Player getPlayer()
 	{
 		return _player;
