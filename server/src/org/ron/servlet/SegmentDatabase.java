@@ -108,14 +108,14 @@ extends AbstractDatabase<Segment>
 	protected Calendar getSegmentTime(ResultSet result)
 	throws SQLException
 	{
-		return getSegmentTime(result.getInt(5));
+		return getSegmentTime(result.getInt(4));
 	}
 	
 	protected Calendar getSegmentTime(int timeS)
 	throws SQLException
 	{
 		Calendar calendar = Calendar.getInstance();
-		calendar.set(0, 0, 0, 0, 0, timeS);
+		calendar.set(Calendar.SECOND, timeS);
 		return calendar;
 	}
 	
@@ -192,7 +192,7 @@ extends AbstractDatabase<Segment>
 			{
 				statement.setFloat(1, startNodeId);
 				statement.setFloat(2, endNodeId);
-				statement.setFloat(5, Calendar.getInstance().get(Calendar.SECOND));
+				statement.setFloat(3, Calendar.getInstance().get(Calendar.SECOND));
 						
 				statement.executeUpdate();
 			}
@@ -286,9 +286,9 @@ extends AbstractDatabase<Segment>
 		PreparedStatement statement = getPreparedStatement
 		(
 			PS_SIZE,
-			"SELECT COUNT(ID) " +
+			"SELECT COUNT(*) " +
 			"FROM " + SQLTABLENAME + " " +
-			"WHERE PLAYERID = ?"
+			"WHERE ENDNODE IN (SELECT " + NodeDatabase.SQLTABLENAME + "." + NodeDatabase.SQLIDCOLUMN + " FROM " + NodeDatabase.SQLTABLENAME + " WHERE PLAYERID = ?)"
 		);
 		
 		synchronized(statement)

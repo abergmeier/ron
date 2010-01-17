@@ -17,7 +17,7 @@ implements Segment
 	
 	public void set(int id, Node start, Node end, Calendar time)
 	{
-		if(start.getPlayer().equals(end.getPlayer()))
+		if(!start.getPlayer().equals(end.getPlayer()))
 			throw new IllegalArgumentException("Segment nodes need the belong to the same player");
 		
 		_id = id;

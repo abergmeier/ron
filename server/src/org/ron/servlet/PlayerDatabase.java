@@ -167,13 +167,13 @@ implements Set<Player>
 	protected float getLatitude(ResultSet result)
 	throws SQLException
 	{
-		return result.getFloat(1);
+		return result.getFloat(2);
 	}
 	
 	protected float getLongitude(ResultSet result)
 	throws SQLException
 	{
-		return result.getFloat(2);
+		return result.getFloat(3);
 	}
 	
 	protected Player get(ResultSet result)
@@ -208,47 +208,45 @@ implements Set<Player>
 			"FROM " + SQLTABLENAME + " " + 
 			"WHERE ID = ?"
 		);
-		
-		ResultSet result = null;
-		
-		try
+
+		synchronized(statement)
 		{
-			synchronized(statement)
-			{
-				statement.setInt(1, player.getId());
-				result = statement.executeQuery();
+			statement.setInt(1, player.getId());
 			
+			ResultSet result = statement.executeQuery();
+		
+			try
+			{
 				if(result.next())
 					return result;
+				
+				throw new SQLException("NO RESULT");
 			}
-			
-			throw new SQLException("NO RESULT");			
-		}
-		catch(SQLException exception)
-		{
-			finallyCloseStatement(result);
-			throw exception;
-		}
-		catch(RuntimeException exception)
-		{
-			finallyCloseStatement(result);
-			throw exception;
+			catch(SQLException exception)
+			{
+				result.close();
+				throw exception;
+			}
+			catch(RuntimeException exception)
+			{
+				result.close();
+				throw exception;
+			}
 		}
 	}
 	
 	protected int getPlayerBits(Player player)
 	throws SQLException
 	{
-		ResultSet result = null;
+		ResultSet result = getResult(player);
 		
 		try
-		{
-			result = getResult(player);
+		{		
 			return getPlayerBits(result);
 		}
 		finally
 		{
-			finallyCloseStatement(result);
+			result.close();
 		}
 	}
 	
@@ -273,13 +271,13 @@ implements Set<Player>
 	protected int getPlayerBits(ResultSet result)
 	throws SQLException
 	{
-		return result.getInt(4);
+		return result.getInt(5);
 	}
 	
 	protected String getPlayerName(ResultSet result)
 	throws SQLException
 	{
-		return result.getString(3);
+		return result.getString(4);
 	}
 	
 	public String getPlayerName(Player player)
