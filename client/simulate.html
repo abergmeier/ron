@@ -117,6 +117,9 @@
 
 			Line.prototype.removePartials = function()
 			{
+				if(!this.Partials)
+					return; //already removed
+					
 				//remove all polylines
 				var last;
 				while(last = this.Partials.pop())
