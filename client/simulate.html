@@ -113,72 +113,72 @@
 				this.Player = player;
 				this.Partials = new Array();
 				this.PolyLine = null;
+			};
 
-				function removePartials()
+			Line.prototype.removePartials = function()
+			{
+				//remove all polylines
+				var last;
+				while(last = this.Partials.pop())
 				{
-					//remove all polylines
-					var last;
-					while(last = this.Partials.pop())
+					last.setMap(null);
+				}
+
+				//we no longer need the array
+				this.Partials = null;
+			};
+
+			Line.prototype.set = function(startLat, startLng, endLat, endLng)
+			{
+				var start = new google.maps.LatLng(startLat, startLng);
+				var end = new google.maps.LatLng(endLat, endLng);
+			
+				this.PolyLine = new google.maps.Polyline
+				(
 					{
-						last.setMap(null);
+			       		path:[start, end],
+			       		strokeColor: this.Player.Color,
+			       		strokeOpacity: 1.0,
+			       		strokeWeight: 3
 					}
+				);
+				this.PolyLine.setMap(_map);
 
-					//we no longer need the array
-					this.Partials = null;
-				}
+				this.removePartials();
 
-				function set(startLat, startLng, endLat, endLng)
-				{
-					var start = new google.maps.LatLng(startLat, startLng);
-					var end = new google.maps.LatLng(endLat, endLng);
+				//make sure line is displayed
+				fitBounds(start);
+				fitBounds(end);
+			};
+
+			Line.prototype.setPartial = function(startLat, startLng, endLat, endLng)
+			{
+				if(!isPartial())
+					return; //we already have the whole line
+
+				var start = new google.maps.LatLng(startLat, startLng);
+				var end = new google.maps.LatLng(endLat, endLng);
 					
-					this.PolyLine = new google.maps.Polyline
-					(
-						{
-				       		path:[start, end],
-				       		strokeColor: this.Player.Color,
-				       		strokeOpacity: 1.0,
-				       		strokeWeight: 2
-						}
-					);
-					this.PolyLine.setMap(_map);
+				var polyLine = new google.maps.Polyline
+				(
+					{
+			       		path:[start, end],
+			       		strokeColor: this.Player.Color,
+			       		strokeOpacity: 1.0,
+			       		strokeWeight: 2
+			       	}
+				);
+				polyline.setMap(_map);
+				this.Partials.push(polyline);
 
-					removePartials();
+				//make sure partials are displayed
+				fitBounds(start);
+				fitBounds(end);
+			};
 
-					//make sure line is displayed
-					fitBounds(start);
-					fitBounds(end);
-				}
-
-				function setPartial(startLat, startLng, endLat, endLng)
-				{
-					if(!isPartial())
-						return; //we already have the whole line
-
-					var start = new google.maps.LatLng(startLat, startLng);
-					var end = new google.maps.LatLng(endLat, endLng);
-						
-					var polyLine = new google.maps.Polyline
-					(
-						{
-				       		path:[start, end],
-				       		strokeColor: this.Player.Color,
-				       		strokeOpacity: 1.0,
-				       		strokeWeight: 2
-				       	}
-					);
-					polyline.setMap(_map);
-					this.Partials.push(polyline);
-
-					//make sure partials are displayed
-					fitBounds(start);
-					fitBounds(end);
-				}
-
-				function isPartial()
-				{
-					return this.PolyLine == null;
-				}
+			Line.prototype.isPartial = function()
+			{
+				return this.PolyLine == null;
 			}
 
 			function Player(player_name, player_id)
