@@ -394,9 +394,9 @@ implements Collection<Element>
 		}
 	}
 	
-	protected RuntimeException wrapInRuntimeException(Exception cause)
+	protected RuntimeException wrapInRuntimeException(SQLException cause)
 	{
-		return new RuntimeException(cause);
+		return SQLiteConnection.wrapInRuntimeException(cause);
 	}
 	
 	private static final int PS_GETALL = getUniqueRandom();
