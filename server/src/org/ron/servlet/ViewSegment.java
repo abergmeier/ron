@@ -2,28 +2,25 @@ package org.ron.servlet;
 
 public class ViewSegment
 {
-	private int _segmentId;
-	private Node _subStart;
-	private Node _subEnd;
+	private Segment _segment;
+	private float _subStartLatitude;
+	private float _subStartLongitude;
+	private float _subEndLatitude;
+	private float _subEndLongitude;
 	
 	private int _playerId;
 	
-	public ViewSegment(int segmentId, int playerId, Node subStart, Node subEnd)
+	public ViewSegment(Segment segment, int playerId, float startLatitude, float startLongitude, float endLatitude, float endLongitude)
 	{
-		_segmentId = segmentId;
+		_segment = segment;
 		_playerId = playerId;
 		
-		set(subStart, subEnd);
+		set(startLatitude, startLongitude, endLatitude, endLongitude);
 	}
 	
-	public ViewSegment(Segment segment, int playerId, Node subStart, Node subEnd)
+	public Segment getSegment()
 	{
-		this(segment.getId(), playerId, subStart, subEnd);
-	}
-	
-	public int getSegmentId()
-	{
-		return _segmentId;
+		return _segment;
 	}
 	
 	public int getPlayerId()
@@ -33,22 +30,34 @@ public class ViewSegment
 	
 	public Player getOwner()
 	{
-		return _subStart.getPlayer();
+		return _segment.getPlayer();
 	}
 
-	public void set(Node subStart, Node subEnd)
+	public void set(float subStartLatitude, float subStartLongitude, float subEndLatitude, float subEndLongitude)
 	{
-		_subStart = subStart;
-		_subEnd = subEnd;
+		_subStartLatitude = subStartLatitude;
+		_subStartLongitude = subStartLongitude;
+		_subEndLatitude = subEndLatitude;
+		_subEndLongitude = subEndLongitude;
 	}
 	
-	public Node getSubStart()
+	public float getSubStartLatitude()
 	{
-		return _subStart;
+		return _subStartLatitude;
 	}
 	
-	public Node getSubEnd()
+	public float getSubStartLongitude()
 	{
-		return _subEnd;
+		return _subStartLongitude;
+	}
+	
+	public float getSubEndLatitude()
+	{
+		return _subEndLatitude;
+	}
+	
+	public float getSubEndLongitude()
+	{
+		return _subEndLongitude;
 	}
 }

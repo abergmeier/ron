@@ -8,13 +8,11 @@ import java.sql.Savepoint;
 import java.util.Calendar;
 import java.util.Collection;
 
-import javax.vecmath.Vector2f;
-
 public class SegmentDatabase
 extends AbstractDatabase<Segment>
 {
 	public static final String SQLIDCOLUMN = "ID";
-	private static final String SQLFIELDS = SQLIDCOLUMN + ", PLAYERID, START_LAT, START_LNG, END_LAT, END_LNG, TIME";
+	private static final String SQLFIELDS = SQLIDCOLUMN + ", STARTNODE, ENDNODE, TIME";
 	public static final String SQLTABLENAME = "SEGMENT";
 	private static final String SQLORDER = SQLIDCOLUMN + " ASC";
 	
@@ -27,7 +25,7 @@ extends AbstractDatabase<Segment>
 		super(nodes.getConnection());
 		_nodes = nodes;
 		
-		_views = new ViewDatabase(_nodes);
+		_views = new ViewDatabase(this);
 		
 		setConnection(_nodes.getConnection());
 	}
@@ -41,13 +39,11 @@ extends AbstractDatabase<Segment>
 			"CREATE TABLE IF NOT EXISTS " + SQLTABLENAME + " " +
 			"(" +
 				"ID INTEGER PRIMARY KEY NOT NULL," +
-				"PLAYERID INTEGER NOT NULL," +
-				"START_LAT REAL NOT NULL," + 
-				"START_LNG REAL NOT NULL," +
-				"END_LAT REAL NOT NULL," +
-				"END_LNG REAL NOT NULL," +
+				"STARTNODE INTEGER NOT NULL," + 
+				"ENDNODE INTEGER NOT NULL," +
 				"TIME INT NOT NULL," +
-				"FOREIGN KEY (PLAYERID) REFERENCES " + PlayerDatabase.SQLTABLENAME + "(" + PlayerDatabase.SQLIDCOLUMN + ")" +
+				"FOREIGN KEY (STARTNODE) REFERENCES " + NodeDatabase.SQLTABLENAME + "(" + NodeDatabase.SQLIDCOLUMN + ")," +
+				"FOREIGN KEY (ENDNODE) REFERENCES " + NodeDatabase.SQLTABLENAME + "(" + NodeDatabase.SQLIDCOLUMN + ")," +
 			")"
 		);	
 	}
@@ -61,7 +57,40 @@ extends AbstractDatabase<Segment>
 	protected Segment get(ResultSet result)
 	throws SQLException
 	{
-		return new Segment(getSegmentId(result), getSegmentStart(result), getSegmentEnd(result), getSegmentTime(result));
+		return new Segment
+		(
+			getSegmentId(result),
+			_nodes.get(getSegmentStartNodeId(result)),
+			_nodes.get(getSegmentEndNodeId(result)),
+			getSegmentTime(result)
+		);
+	}
+	
+	protected Segment get(int segmentId, int playerid, int startNodeId, float startLatitude, float startLongitude, int endNodeId, float endLatitude, float endLongitude, int time)
+	throws SQLException
+	{
+		return new Segment
+		(
+			segmentId,
+			_nodes.get(playerid, startNodeId, startLatitude, startLongitude),
+			_nodes.get(playerid, endNodeId, endLatitude, endLongitude),
+			getSegmentTime(time)
+		);
+	}
+	
+	protected Segment get(int segmentId)
+	throws SQLException
+	{
+		ResultSet result = getWhere("ID = " + segmentId);
+		
+		try
+		{
+			return get(result);
+		}
+		finally
+		{
+			result.close();
+		}
 	}
 	
 	protected int getSegmentId(ResultSet result)
@@ -70,24 +99,30 @@ extends AbstractDatabase<Segment>
 		return result.getInt(1);
 	}
 	
-	protected Node getSegmentStart(ResultSet result)
+	private int getSegmentStartNodeId(ResultSet result)
 	throws SQLException
 	{
-		return _nodes.get(result.getFloat(3), result.getFloat(4));
+		return result.getInt(2);	
 	}
 	
 	protected Calendar getSegmentTime(ResultSet result)
 	throws SQLException
 	{
+		return getSegmentTime(result.getInt(5));
+	}
+	
+	protected Calendar getSegmentTime(int timeS)
+	throws SQLException
+	{
 		Calendar calendar = Calendar.getInstance();
-		calendar.set(0, 0, 0, 0, 0, result.getInt(5));
+		calendar.set(0, 0, 0, 0, 0, timeS);
 		return calendar;
 	}
 	
-	protected Node getSegmentEnd(ResultSet result)
+	private int getSegmentEndNodeId(ResultSet result)
 	throws SQLException
 	{
-		return _nodes.get(result.getFloat(5), result.getFloat(6));
+		return result.getInt(3);
 	}
 
 	@Override
@@ -120,23 +155,18 @@ extends AbstractDatabase<Segment>
 	@Override
 	public boolean add(Segment segment)
 	{
-		Vector2f start = segment.getStart();
-		Vector2f end = segment.getEnd();
-		
-		try
-		{
-			return add(getLatitude(start), getLongitude(start), getLatitude(end), getLongitude(end));
-		}
-		catch (SQLException e)
-		{
-			throw wrapInRuntimeException(e);
-		}
+		throw new UnsupportedOperationException();
 	}
 	
 	private static final int PS_INSERT = getUniqueRandom();
-	private static final int PS_INSERT_SELECT = getUniqueRandom();
 	
-	public boolean add(float startLat, float startLng, float endLat, float endLng)
+	public boolean add(Node startNode, Node endNode)
+	throws SQLException
+	{
+		return add(startNode.getId(), endNode.getId());
+	}
+	
+	public boolean add(int startNodeId, int endNodeId)
 	throws SQLException
 	{
 		Savepoint save = getConnection().setSavepoint();
@@ -154,51 +184,17 @@ extends AbstractDatabase<Segment>
 			(
 				PS_INSERT,
 				"INSERT INTO " + SQLTABLENAME + " " + 
-				"(START_LAT, START_LNG, END_LAT, END_LNG, TIME) VALUES " + 
-				"(?,?,?,?,?)"
+				"(STARTNODE, ENDNODE, TIME) VALUES " + 
+				"(?,?,?)"
 			);
 			
 			synchronized(statement)
 			{
-				statement.setFloat(1, startLat);
-				statement.setFloat(2, startLng);
-				statement.setFloat(3, endLat);
-				statement.setFloat(4, endLng);
+				statement.setFloat(1, startNodeId);
+				statement.setFloat(2, endNodeId);
 				statement.setFloat(5, Calendar.getInstance().get(Calendar.SECOND));
 						
 				statement.executeUpdate();
-			}
-			
-			statement = getPreparedStatement
-			(
-				PS_INSERT_SELECT,
-				"SELECT " + SQLFIELDS + " " +
-				"FROM " + SQLTABLENAME + " " +
-				"WHERE " + 
-					"START_LAT = ? AND " +
-					"START_LNG = ? AND " +
-					"END_LAT = ? AND " +
-					"END_LNG = ?"
-			);
-			
-			synchronized(statement)
-			{		
-				statement.setFloat(1, startLat);
-				statement.setFloat(2, startLng);
-				statement.setFloat(3, endLat);
-				statement.setFloat(4, endLng);
-				ResultSet result = statement.executeQuery();
-				
-				try
-				{
-					result.next();
-				
-					getId(result);
-				}
-				finally
-				{
-					result.close();
-				}
 			}
 			
 			//commited = commit();

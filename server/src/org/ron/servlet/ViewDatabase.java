@@ -17,15 +17,15 @@ extends AbstractDatabase<ViewSegment>
 {
 	private static final String SQLFIELDS = "PLAYERID, SEGMENTID, START_LAT, START_LNG, END_LAT, END_LNG";
 	private static final String SQLTABLENAME = "SEGMENTVIEW";
-	private static final String SQLORDER = "PLAYERID ASC, SEGMENTID ASC, START_LAT ASC";
+	private static final String SQLORDER = "PLAYERID ASC, SEGMENTID ASC, START_LAT ASC, START_LNG ASC";
 	
-	private final NodeDatabase _nodes;
+	private final SegmentDatabase _segments;
 	
-	public ViewDatabase(NodeDatabase nodes)
+	public ViewDatabase(SegmentDatabase segments)
 	throws SQLException
 	{
-		super(nodes.getConnection());
-		_nodes = nodes;
+		super(segments.getConnection());
+		_segments = segments;
 	}	
 
 	public void getUpdate(ClientWriter writer, Player player, Segment[] segments)
@@ -89,11 +89,19 @@ extends AbstractDatabase<ViewSegment>
 	{
 		return new ViewSegment
 		(
-			getSegmentId(result),
+			getSegment(result),
 			getPlayerId(result),
-			getStartNode(result),
-			getEndNode(result)
+			getStartLatitude(result),
+			getStartLongitude(result),
+			getEndLatitude(result),
+			getEndLongitude(result)
 		);
+	}
+	
+	protected Segment getSegment(ResultSet result)
+	throws SQLException
+	{
+		return _segments.get(getSegmentId(result));
 	}
 	
 	protected int getSegmentId(ResultSet result)
@@ -125,18 +133,6 @@ extends AbstractDatabase<ViewSegment>
 	{
 		return getFloat(result, 6);
 	}
-	
-	protected Node getStartNode(ResultSet result)
-	throws SQLException
-	{
-		return _nodes.get(getStartLatitude(result), getStartLongitude(result));
-	}
-	
-	protected Node getEndNode(ResultSet result)
-	throws SQLException
-	{
-		return _nodes.get(getEndLatitude(result), getEndLongitude(result));
-	}
 
 	@Override
 	protected String getSQLFields()
@@ -159,16 +155,7 @@ extends AbstractDatabase<ViewSegment>
 	@Override
 	public boolean add(ViewSegment segment)
 	{
-		Node start = segment.getSubStart();
-		Node end = segment.getSubEnd();
-		try
-		{
-			return add(segment.getPlayerId(), segment.getSegmentId(), start.getLatitude(), start.getLongitude(), end.getLatitude(), end.getLongitude());
-		}
-		catch (SQLException exception)
-		{
-			throw wrapInRuntimeException(exception);
-		}
+		throw new UnsupportedOperationException();
 	}
 	
 	protected boolean add(Player player, Segment segment)
@@ -258,7 +245,7 @@ extends AbstractDatabase<ViewSegment>
 		ViewSegment segment = (ViewSegment)object;
 		try
 		{
-			return contains(segment.getPlayerId(), segment.getSegmentId());
+			return contains(segment.getPlayerId(), segment.getSegment().getId());
 		}
 		catch (SQLException e)
 		{
@@ -352,28 +339,28 @@ extends AbstractDatabase<ViewSegment>
 
 	private String getWhere(ViewSegment segment)
 	{
-		return getWhere(segment.getPlayerId(), segment.getSegmentId(), segment.getSubStart(), segment.getSubEnd());
+		return getWhere(segment.getPlayerId(), segment.getSegment().getId(), segment.getSubStartLatitude(), segment.getSubStartLongitude(), segment.getSubEndLatitude(), segment.getSubEndLongitude());
 	}
 
-	private String getWhere(int playerId, int segmentId, Vector2f start, Vector2f end)
+	private String getWhere(int playerId, int segmentId, float startLat, float startLng, float endLat, float endLng)
 	{
 		String where = 
 		"(" +
 			"PLAYERID = " + playerId + " " +
 			"SEGMENTID = " + segmentId + " ";
 		
-		if(start != null)
+		if(startLat != Float.NaN && startLng != Float.NaN)
 		{
 			where +=
-				"AND START_LAT = " + getLatitude(start) + " " +
-				"AND START_LNG = " + getLongitude(start) + " ";
+				"AND START_LAT = " + startLat + " " +
+				"AND START_LNG = " + startLng + " ";
 		}
 		
-		if(end != null)
+		if(endLat != Float.NaN && endLng != Float.NaN)
 		{
 			where +=
-				"AND END_LAT = " + getLatitude(end) + " " +
-				"AND END_LNG = " + getLongitude(end);
+				"AND END_LAT = " + endLat + " " +
+				"AND END_LNG = " + endLng;
 		}
 		
 		where += ")";

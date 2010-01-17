@@ -13,8 +13,9 @@ public class NodeDatabase
 extends AbstractDatabase<Node>
 implements Set<Node>
 {
-	private static final String SQLTABLENAME = "NODE";
-	private static final String SQLFIELDS = "PLAYERID,LAT,LNG,ID";
+	public static final String SQLIDCOLUMN = "ID";
+	public static final String SQLTABLENAME = "NODE";
+	private static final String SQLFIELDS = "PLAYERID,LAT,LNG," + SQLIDCOLUMN;
 	private static final String SQLORDER = "PLAYERID ASC";
 	
 	private PlayerDatabase _players;
@@ -122,24 +123,21 @@ implements Set<Node>
 				statement.close(); //cleanup executed statement
 			}
 			
+			//get the last 2 nodes
 			statement = getPreparedStatement
 			(
 				PS_INSERTSELECTKEY,
 				"SELECT " + SQLFIELDS + " " +
 				"FROM " + SQLTABLENAME + " " + 
 				"WHERE " +
-					"PLAYERID = ? AND " +
-					"LAT <> ? AND " +
-					"LNG <> ? " +
+					"PLAYERID = ? " +
 				"ORDER BY ID DESC," + SQLORDER + " " +
-				"LIMIT 1"				
+				"LIMIT 2"				
 			);
 			
 			synchronized(statement)
 			{
 				statement.setInt(1, player.getId());
-				statement.setFloat(2, lat);
-				statement.setFloat(3, lng);
 				
 				//check whether there are more than 1 node present
 				ResultSet result = statement.executeQuery();
@@ -147,7 +145,15 @@ implements Set<Node>
 				try
 				{
 					if(!result.next())
+						throw new SQLException("INSERT FAILED!?");
+					
+					//we have the current inserted
+					Node endNode = get(result);
+						
+					if(!result.next())
 						return true; //we're done
+					
+					Node startNode = get(result);
 					
 					try
 					{	
@@ -159,7 +165,7 @@ implements Set<Node>
 					}
 				
 					//there's more than one node so create segments
-					boolean returnValue = _segments.add(lat, getLatitude(result), position.getLatitude(), position.getLongitude());
+					boolean returnValue = _segments.add(startNode, endNode);
 					//commited = commit();
 					return returnValue;
 				}
@@ -233,13 +239,19 @@ implements Set<Node>
 	protected Node get(ResultSet result)
 	throws SQLException
 	{
-		return new Node(new Player(getPlayerId(result), _players), getNodeId(result), getLatitude(result), getLongtitude(result));
+		return get(getPlayerId(result), getNodeId(result), getLatitude(result), getLongtitude(result));
 	}
 	
-	protected Node get(float lat, float lng)
+	protected Node get(int playerId, int nodeId, float latitude, float longitude)
 	throws SQLException
 	{
-		ResultSet result = getWhere("LAT = " + lat + " AND LNG = " + lng);
+		return new Node(_players.get(playerId), nodeId, latitude, longitude);
+	}
+	
+	protected Node get(int id)
+	throws SQLException
+	{
+		ResultSet result = getWhere("ID = " + id);
 		
 		try
 		{
