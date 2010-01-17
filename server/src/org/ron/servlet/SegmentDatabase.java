@@ -277,7 +277,7 @@ extends AbstractDatabase<Segment>
 				PS_GETPLAYER,
 				"SELECT " + SQLFIELDS + " " +
 				"FROM " + SQLTABLENAME + " " +
-				"WHERE PLAYERID = ? AND TIME >= ?" + 
+				"WHERE ENDNODE IN (SELECT " + NodeDatabase.SQLTABLENAME + "." + NodeDatabase.SQLIDCOLUMN + " FROM " + NodeDatabase.SQLTABLENAME + " WHERE PLAYERID = ?) AND TIME >= ?" + 
 				"ORDER BY " + SQLORDER
 			);
 			
@@ -368,20 +368,14 @@ extends AbstractDatabase<Segment>
 				"SELECT " + SQLFIELDS + " " +
 				"FROM " + SQLTABLENAME + " " +
 				"WHERE " +
-					"PLAYERID = ? AND " +
-					"START_LAT = ? AND " +
-					"START_LNG = ? AND " +
-					"END_LAT = ? AND " +
-					"END_LNG = ?" 
+					"STARTNODE = ? AND " +
+					"ENDNODE = ?"  
 			);
 
 			synchronized(statement)
 			{
-				statement.setInt(1, segment.getPlayer().getId());
-				statement.setFloat(2, segment.getStart().getLatitude());
-				statement.setFloat(3, segment.getStart().getLongitude());
-				statement.setFloat(4, segment.getEnd().getLatitude());
-				statement.setFloat(5, segment.getEnd().getLongitude());
+				statement.setFloat(1, segment.getStart().getId());
+				statement.setFloat(2, segment.getEnd().getId());
 
 				ResultSet result = statement.executeQuery();
 				
@@ -419,11 +413,8 @@ extends AbstractDatabase<Segment>
 	private String getWhere(Segment segment)
 	{
 		return
-			"PLAYERID = " + segment.getPlayer().getId() + " AND " +
-			"START_LAT = " + segment.getStart().getLatitude() + " AND " +
-			"START_LNG = " + segment.getStart().getLongitude() + " AND " +
-			"END_LAT = " + segment.getEnd().getLatitude() + " AND " +
-			"END_LNG = " + segment.getEnd().getLongitude();			
+			"STARTNODE = " + segment.getStart().getId() + " AND " +
+			"ENDNODE = " + segment.getEnd().getId();			
 	}
 
 	@Override
