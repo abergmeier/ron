@@ -43,7 +43,7 @@ extends AbstractDatabase<Segment>
 				"ENDNODE INTEGER NOT NULL," +
 				"TIME INT NOT NULL," +
 				"FOREIGN KEY (STARTNODE) REFERENCES " + NodeDatabase.SQLTABLENAME + "(" + NodeDatabase.SQLIDCOLUMN + ")," +
-				"FOREIGN KEY (ENDNODE) REFERENCES " + NodeDatabase.SQLTABLENAME + "(" + NodeDatabase.SQLIDCOLUMN + ")," +
+				"FOREIGN KEY (ENDNODE) REFERENCES " + NodeDatabase.SQLTABLENAME + "(" + NodeDatabase.SQLIDCOLUMN + ")" +
 			")"
 		);	
 	}
