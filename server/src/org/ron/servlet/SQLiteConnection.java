@@ -30,6 +30,11 @@ implements Connection
 	private final PreparedStatement _createSavepoint;
 	private final PreparedStatement _rollbackSavepoint;
 */
+	public static RuntimeException wrapInRuntimeException(SQLException exception)
+	{
+		return new RuntimeException(exception);
+	}
+	
 	
 	public SQLiteConnection(Connection connection)
 	throws SQLException
