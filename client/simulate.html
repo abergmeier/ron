@@ -242,8 +242,8 @@
 			//save the last servertime of a received update
 			var lastServerTime;
 			var lastServerPosition = new Array(0, 0);
-			var marker;
-			var bounds;
+			var _marker;
+			var _bounds;
 
 			var _watchID;
 			
@@ -287,35 +287,39 @@
 
 				var myLatLng = new google.maps.LatLng(lat, lng);
 
-				if(marker)
-					marker.setPosition(myLatLng);
-				else
+				if(_marker)
+					_marker.setPosition(myLatLng);
+ 				else
 				{
-					var player = getPlayer();
-					marker = new google.maps.Marker
+					_marker = new google.maps.Marker
 					({
       						position: myLatLng, 
-      						map: _map, 
-						title: player.Name + "s Position"
+							map: _map, 
+							title: getPlayer().Name + "s Position"
 					});
 				}
 
 				//make sure marker is displayed
 				fitBounds(myLatLng);
+				_map.panTo(myLatLng);
 			}
 		
 			function submitPoint()
 			{
-				if(!marker)
+				if(!_marker)
 					return;
 
-				callRPCMethod("addNode", getPlayer().getId());
+				var response = callRPCMethod("addNode", getPlayer().getId());
 
-				var myLatLng = new google.maps.LatLng(lat, lng);
-				//make sure marker is displayed
-				fitBounds(myLatLng);
-				//display the just submitted points
-				displayPoints(playerId, lastServerPosition[0], lastServerPosition[1]);
+				if(!response || !response[0])
+					return; //TODO: handle properly
+
+				var segmentArray = response[0];
+
+				if(!segmentArray.length)
+					return; //no segment yet
+				
+				getPlayer().addLine(segmentArray[0], segmentArray[1], segmentArray[2], segmentArray[3], segmentArray[4]);
 			}
 		
 			/*function displayPoints(player_id)
@@ -344,11 +348,14 @@
 			
 			function createXml(markup)
 			{
+				if(!markup)
+					return null;
+				
 				var doc;
 
 				if(window.DOMParser)
 				{
-					var parser= new DOMParser();
+					var parser = new DOMParser();
 					doc = parser.parseFromString(markup, "text/xml");
 				}
 				else
@@ -364,7 +371,8 @@
 			
 			function fitBounds(latLng)
 			{
-				bounds.extend(latLng);
+				_bounds.extend(latLng);
+				_map.fitBounds(_bounds);
 			}
 
 			function callForAll(player, elements, callback)
@@ -406,10 +414,10 @@
 		
 			function getPoints()
 			{
-				if(!marker)
+				if(!_marker)
 					return; //we cannot do anything without a position
 				
-				var position = marker.getPosition();
+				var position = _marker.getPosition();
 
 				var playerId = getPlayer().getId();
 
@@ -419,13 +427,16 @@
 				else
 					responseParameters = callRPCMethod("updateState", playerId, position.lat(), position.lng());
 
-				if(!responseParameters)
+				if(!responseParameters || !responseParameters.length)
 					return; //TODO: problem handling
 
 				lastServerPosition[0] = position.lat(); 
 				lastServerPosition[1] = position.lng();
 
 				var responseDocument = createXml(responseParameters[0]);
+
+				if(!responseDocument)
+					return; //TODO: handle problem
 				
 				var stateElement = responseDocument.getElementsByTagName("state")[0];
 
@@ -560,7 +571,7 @@
 							keyboardShortcuts: false,
 							scrollwheel: false,
 							mapTypeControl: false,
-							zoom: 5,
+							zoom: 10,
 							center: myLatLng,
 							mapTypeId: google.maps.MapTypeId.ROADMAP
 						};
@@ -568,8 +579,8 @@
 						_map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
 
 						//make sure current position is displayed
-						bounds = new google.maps.LatLngBounds(myLatLng, myLatLng);
-						_map.fitBounds(bounds);
+						_bounds = new google.maps.LatLngBounds(myLatLng, myLatLng);
+						_map.fitBounds(_bounds);
 						
 						updatePosition(position);
 
