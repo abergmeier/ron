@@ -58,9 +58,7 @@ extends XmlRpcServlet
 	
 	@Override
 	public void destroy()
-	{
-		super.destroy();
-		
+	{	
 		try
 		{
 			_players.getNodes().getSegments().getViews().close();
@@ -74,6 +72,8 @@ extends XmlRpcServlet
 		{
 			exception.printStackTrace();
 		}
+		
+		super.destroy();
 	}
 /*	
 	//remember the HttpSession of the current thread
