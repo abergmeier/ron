@@ -324,84 +324,24 @@
 				
 				getPlayer().addLine(segmentArray[0], segmentArray[1], segmentArray[2], segmentArray[3], segmentArray[4]);
 			}
-		
-			/*function displayPoints(player_id)
-			{
-				var player = _players[player_id];
 
-				if(!player)
-				{
-					alert("No player with id" + player_id);
-					return;
-				}
-		
-				var path = player.Lines[].getPath();
-				
-				for(var i = 1; i < arguments.length; i += 2)
-				{
-					// Because path is an MVCArray, we can simply append a new coordinate
-					// and it will automatically appear
-					var latLng = new google.maps.LatLng(arguments[i], arguments[i + 1]);
-					path.insertAt(path.getLength(), latLng);
-					
-					//make sure map is centered so point is visible
-					fitBounds(latLng);
-				}
-			}*/
-			
-			function createXml(markup)
-			{
-				if(!markup)
-					return null;
-				
-				var doc;
-
-				if(window.DOMParser)
-				{
-					var parser = new DOMParser();
-					doc = parser.parseFromString(markup, "text/xml");
-				}
-				else
-				{
-					//IE way
-					doc = new ActiveXObject("Microsoft.XMLDOM"); 
-					doc.async = "false";
-					doc.loadXML(markup);
-				}
-				
-				return doc;
-			}
-			
 			function fitBounds(latLng)
 			{
 				_bounds.extend(latLng);
 				_map.fitBounds(_bounds);
 			}
 
-			function callForAll(player, elements, callback)
+			function callForAll(player, segmentArray)
 			{
-				var rootElement;
-				var rootElementId;
-				var start;
-				var end;
-				
-				for(var i = 0; i != collection.length; i++)
+				for(var index in segmentArray)
 				{
-					rootElement = elements[i];
-					rootElementId = rootElement.getAttribute("id");
-	
-					start = rootElement.getElementsByTagName("start")[0];
-					end = rootElement.getElementsByTagName("end")[0];
+					var segmentData = segmentArray[index];
 
-					callback
-					(
-						player,
-						rootElementId,
-						parseFloat(start.getAttribute("lat")),
-						parseFloat(start.getAttribute("lng")),
-						parseFloat(end.getAttribute("lat")),
-						parseFloat(end.getAttribute("lng"))
-					);
+					if(segmentData[0] == "segment")
+						player.addLine(player, segmentData[1], segmentData[2], segmentData[3], segmentData[4], segmentData[5]);
+					else
+						player.addPartialLine(player, segmentData[1], segmentData[2], segmentData[3], segmentData[4], segmentData[5]);
+					
 				}
 			}
 
@@ -436,34 +376,20 @@
 				lastServerPosition[0] = position.lat(); 
 				lastServerPosition[1] = position.lng();
 
-				var responseDocument = createXml(responseParameters[0]);
+				var stateMap = responseParameters[0];
 
-				if(!responseDocument)
-					return; //TODO: handle problem
-				
-				var stateElement = responseDocument.getElementsByTagName("state")[0];
+				lastServerTime = stateMap["time"];
 
-				if(!stateElement)
-					return; //TODO: handle problem
-					
-				lastServerTime = parseInt(stateElement.getAttribute("time"));
-			
-				var playerElements = responseDocument.getElementsByTagName("player");
-				var id;
+				var playerData = stateMap["data"];
 				var player;
 							
 				//process all received player data
-				for(var i = 0; i != playerElements.length; i++)
+				for(var playerId in playerData)
 				{
-					id = playerElements[i].getAttribute("id");
-
-					player = getPlayerById(id);
+					player = getPlayerById(playerId);
 
 					//process whole segments
-					callForAll(player, playerElements[i].getElementsByTagName("segment"), addLine);
-
-					//process partial segments
-					callForAll(player, playerElements[i].getElementsByTagName("partial"), addPartialLine);
+					callForAll(player, playerData[playerId]);
 				}
 			}
 

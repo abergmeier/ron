@@ -6,6 +6,9 @@ import java.sql.SQLException;
 import java.sql.Savepoint;
 import java.sql.Statement;
 import java.util.Calendar;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.io.IOException;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -167,19 +170,21 @@ extends XmlRpcServlet
 		return new Object[]{segment.getId(), (double)segment.getStart().getLatitude(), (double)segment.getStart().getLongitude(), (double)segment.getEnd().getLatitude(), (double)segment.getEnd().getLongitude()};
 	}
 		
-	public String updateState(int playerId, double lat, double lng)
+	public Map<String, Object> updateState(int playerId, double lat, double lng)
 	throws SQLException, ClassNotFoundException
 	{
 		return updateState(playerId, lat, lng, 0);
 	}
 	
-	public String updateState(int playerId, double lat, double lng, int time)
+	public Map<String, Object> updateState(int playerId, double lat, double lng, int time)
 	throws SQLException, ClassNotFoundException
-	{		
+	{	
+		HashMap<String, Object> result = new HashMap<String, Object>();
+		
 		Player player = _players.get(playerId);
 		
 		if(player.hasLost())
-			return "<state/>"; //user no longer needs updates
+			return result; //user no longer needs updates
 		
 		//before anything else update position
 		player.setPosition((float)lat, (float)lng);
@@ -220,18 +225,20 @@ extends XmlRpcServlet
 			}
 			
 			if(allLost != null && allLost)
-				return "<state won=\"true\"/>";
+			{
+				result.put("won", true);
+				return result;
+			}
 		}
 		catch(PositionCollision exception)
 		{
-			return "<state lost=\"true\"/>";
+			result.put("lost", true);
+			return result;
 		}
 		
-		return
-			"<state time=\"" + newUpdateTime.get(Calendar.SECOND) + "\">\n" +
-				writer.close() +
-			"</state>";
-		
+		result.put("time", newUpdateTime.get(Calendar.SECOND));
+		result.put("data", writer.close());
+		return result;
 	}
 
 	public int addPlayer(String name, double latitude, double longitude)
@@ -293,18 +300,60 @@ extends XmlRpcServlet
 	</params>
 </methodCall>
 <methodResponse>
-	<state time="34343" won="false" lost="false">
-		<player id="">
-			<segment id="1">
-				<start lat="343.343" lng="3434.343"/>
-				<end lat="434.3434" lng="3434.343"/>
-			</segment>
-			<partial id="2">
-			 	<start lat="4343.343" lng="3434.343"/>
-			 	<end lat="4343.343" lng="23343.343"/>
-			 </partial>
-		</player>
-	</state>
+	<struct>
+  		<member>
+    		<name>time</name>
+    		<value><i4>34343</i4></value>
+  		</member>
+		<member>
+			<name>won</name>
+			<value><boolean>false</boolean></value>
+		</member>
+		<member>
+			<name>lost</name>
+			<value><boolean>false</boolean></value>
+		</member>
+		<member>
+			<name>data</name>
+			<value>
+				<struct>
+					<member>
+						<name>6</name>
+						<value>
+							<array>
+								<data>
+									<value>
+										<array>
+											<data>
+												<value><string>segment</string></value>
+												<value><i4>1</i4></value>
+												<value<double>343.343</double></value>
+												<value<double>3434.343</double></value>
+												<value<double>434.3434</double></value>
+												<value<double>3434.343</double></value>												
+											</data>
+										</array>
+									</value>
+									<value>
+										<array>
+											<data>
+												<value><string>partial</string></value>
+												<value><i4>2</i4></value>
+												<value<double>4343.343</double></value>
+												<value<double>3434.343</double></value>
+												<value<double>4343.343</double></value>
+												<value<double>23343.343</double></value>												
+											</data>
+										</array>
+									</value>
+								</data>
+							</array>
+						</value>
+					</member>
+				</struct>
+			</value>
+		</member>
+	</struct>
 </methodResponse>
 
 

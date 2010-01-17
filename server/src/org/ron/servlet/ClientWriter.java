@@ -1,56 +1,67 @@
 package org.ron.servlet;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import javax.vecmath.Vector2f;
 
 public class ClientWriter
 {
-	private Player _player = null;
-	private int _segmentId = Integer.MIN_VALUE;
-	private Vector2f _start;
-	private Vector2f _end;
-	private boolean _isPartial;
-	
-	private String _output = "";
+	private final Map<Integer,List<Object[]>> _players = new HashMap<Integer, List<Object[]>>();
 	
 	public ClientWriter()
 	{
 	}
 	
-	public void setPlayer(Player player)
+	private List<Object[]> getData(Segment segment)
 	{
-		if(player != _player && _segmentId == Integer.MIN_VALUE)
+		List<Object[]> playerData = _players.get(segment.getPlayer().getId());
+		
+		if(playerData == null)
 		{
-			_output +=
-				"<player id=\"" + _player.getId() + "\">\n" +
-					"<" + (_isPartial ? "partial" : "segment") + " id=\"" + _segmentId + "\">\n" +
-						"<start lat=\"" + _start.getX() + "\" lng=\"" + _start.getY() + "\"/>\n" +
-						"<end lat=\"" + _end.getX() + "\" lng=\"" + _end.getY() + "\"/>\n" +
-					"</segment>\n" +
-				"</player>\n";
+			playerData = new ArrayList<Object[]>();
+			_players.put(segment.getPlayer().getId(), playerData);
 		}
 		
-		_player = player;
+		return playerData;
 	}
 	
 	public void add(Segment segment)
 	{
-		_isPartial = false;
-		_segmentId = segment.getId();
-		_start = segment.getStart().toVector();;
-		_end = segment.getEnd().toVector();		
+		getData(segment).add
+		(
+			new Object[]
+			{
+				"segment",
+				segment.getId(),
+				segment.getStart().getLatitude(),
+				segment.getStart().getLongitude(),
+				segment.getEnd().getLatitude(),
+				segment.getEnd().getLongitude()
+			}
+		);	
 	}
 	
 	public void add(Segment segment, Vector2f start, Vector2f end)
 	{
-		_isPartial = true;
-		_segmentId = segment.getId();
-		_start = start;
-		_end = end;
+		getData(segment).add
+		(
+			new Object[]
+			{
+				"partial",
+				segment.getId(),
+				start.getX(),
+				start.getY(),
+				end.getX(),
+				end.getY()
+			}
+		);
 	}
 	
-	public String close()
+	public Map<Integer,List<Object[]>> close()
 	{
-		setPlayer(null);
-		return _output;
+		return _players;
 	}
 }
