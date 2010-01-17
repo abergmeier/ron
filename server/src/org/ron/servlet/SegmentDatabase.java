@@ -78,6 +78,37 @@ extends AbstractDatabase<Segment>
 		);
 	}
 	
+	private static final int PS_GETLAST = getUniqueRandom();
+	
+	protected Segment getLast(Player player)
+	throws SQLException
+	{
+		PreparedStatement statement = getPreparedStatement
+		(
+			PS_GETLAST,
+			"SELECT " + SQLFIELDS + " " + 
+			"FROM " + SQLTABLENAME + " " +
+			"WHERE ENDNODE IN (SELECT " + NodeDatabase.SQLTABLENAME + "." + NodeDatabase.SQLIDCOLUMN + " FROM " + NodeDatabase.SQLTABLENAME + " WHERE PLAYERID = ?) " +
+			"ORDER BY ENDNODE DESC," + SQLORDER + " " +
+			"LIMIT 1"
+		);
+		
+		statement.setInt(1, player.getId());
+		
+		ResultSet result = statement.executeQuery();
+		try
+		{
+			if(!result.next())
+				return null; //no segment yet present
+			
+			return get(result);
+		}
+		finally
+		{
+			result.close();
+		}
+	}
+	
 	protected Segment get(int segmentId)
 	throws SQLException
 	{

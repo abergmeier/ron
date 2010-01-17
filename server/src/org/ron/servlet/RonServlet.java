@@ -154,12 +154,17 @@ extends XmlRpcServlet
 		}   
 	}
 	
-	public boolean addNode(int playerId)
+	public Object[] addNode(int playerId)
 	throws SQLException, ClassNotFoundException
 	{
 		Player player = _players.get(playerId);
 		_players.getNodes().addForPlayerPosition(player);
-		return true;
+		Segment segment = _players.getNodes().getSegments().getLast(player);
+		
+		if(segment == null)
+			return new Object[0];
+	
+		return new Object[]{segment.getId(), (double)segment.getStart().getLatitude(), (double)segment.getStart().getLongitude(), (double)segment.getEnd().getLatitude(), (double)segment.getEnd().getLongitude()};
 	}
 		
 	public String updateState(int playerId, double lat, double lng)
