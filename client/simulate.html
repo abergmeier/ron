@@ -68,28 +68,29 @@
 				} 
 			};
 
+			function functionDelegate(functionName, lat, lng)
+			{
+				var wrapper = new Object();
+				wrapper.coords = new Object();
+				wrapper.coords.latitude = parseFloat(lat);
+				wrapper.coords.longitude = parseFloat(lng);
+				
+				functionName.call(self, wrapper);
+			}
+			
 			Simulation.prototype.watchPosition = function(functionName)
 			{
 				var len = this._playerPositions;
 				var positions = this._playerPositions[getPlayer().getId() - 1];
 				
-				var position;
-				var wrapper;
+				//var position;
+				//var wrapper;
 				
 				for(var seconds in positions)
 				{
-					position = positions[seconds];
-					wrapper = new Object();
-					wrapper.coords = new Object();
-					wrapper.coords.latitude = position.lat();
-					wrapper.coords.longitude = position.lng();
-					
 					self.setTimeout
 					(
-						function()
-						{					
-							functionName(wrapper);
-						},
+						"functionDelegate(" + functionName + "," + positions[seconds].lat() + "," + positions[seconds].lng() + ");",
 						parseInt(seconds)
 					);
 				}
