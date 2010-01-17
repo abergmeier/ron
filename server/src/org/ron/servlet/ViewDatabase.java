@@ -87,7 +87,7 @@ extends AbstractDatabase<ViewSegment>
 	protected ViewSegment get(ResultSet result)
 	throws SQLException
 	{
-		return new ViewSegment
+		return new ViewSegmentImpl
 		(
 			getSegment(result),
 			getPlayerId(result),

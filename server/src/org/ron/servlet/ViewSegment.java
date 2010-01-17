@@ -1,63 +1,20 @@
 package org.ron.servlet;
 
-public class ViewSegment
+public interface ViewSegment
 {
-	private Segment _segment;
-	private float _subStartLatitude;
-	private float _subStartLongitude;
-	private float _subEndLatitude;
-	private float _subEndLongitude;
+	public Segment getSegment();
 	
-	private int _playerId;
+	public int getPlayerId();
 	
-	public ViewSegment(Segment segment, int playerId, float startLatitude, float startLongitude, float endLatitude, float endLongitude)
-	{
-		_segment = segment;
-		_playerId = playerId;
-		
-		set(startLatitude, startLongitude, endLatitude, endLongitude);
-	}
-	
-	public Segment getSegment()
-	{
-		return _segment;
-	}
-	
-	public int getPlayerId()
-	{
-		return _playerId;
-	}
-	
-	public Player getOwner()
-	{
-		return _segment.getPlayer();
-	}
+	public Player getOwner();
 
-	public void set(float subStartLatitude, float subStartLongitude, float subEndLatitude, float subEndLongitude)
-	{
-		_subStartLatitude = subStartLatitude;
-		_subStartLongitude = subStartLongitude;
-		_subEndLatitude = subEndLatitude;
-		_subEndLongitude = subEndLongitude;
-	}
+	public void set(float subStartLatitude, float subStartLongitude, float subEndLatitude, float subEndLongitude);
 	
-	public float getSubStartLatitude()
-	{
-		return _subStartLatitude;
-	}
+	public float getSubStartLatitude();
 	
-	public float getSubStartLongitude()
-	{
-		return _subStartLongitude;
-	}
+	public float getSubStartLongitude();
 	
-	public float getSubEndLatitude()
-	{
-		return _subEndLatitude;
-	}
+	public float getSubEndLatitude();
 	
-	public float getSubEndLongitude()
-	{
-		return _subEndLongitude;
-	}
+	public float getSubEndLongitude();
 }
