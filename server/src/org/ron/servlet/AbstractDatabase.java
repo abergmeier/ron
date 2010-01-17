@@ -52,8 +52,16 @@ implements Collection<Element>
 	{
 		setConnection(connection);
 		
-		if(!tableExists())
-			createTable();
+		validateTable();
+	}
+	
+	/** Currently just creates table when not already existent
+	 * @throws SQLException
+	 */
+	private void validateTable()
+	throws SQLException
+	{
+		createTable();
 	}
 	
 	public void close()
