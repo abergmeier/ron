@@ -127,6 +127,8 @@ extends XmlRpcServlet
         		_players.setConnection(connection);
         	
         	Statement statement = connection.createStatement();
+        	
+        	//enable foreign keys
         	statement.execute("PRAGMA foreign_keys = ON;");        	
 		}
 		catch (SQLException exception)
