@@ -50,6 +50,11 @@
 				);
 			};
 
+			Simulation.prototype.getCurrentPosition = function(functionName)
+			{
+				functionName(getPosition(_lastServerPosition[0], _lastServerPosition[1]));
+			}
+
 			Simulation.prototype.onClick = function()
 			{
 				var nodes = this._playerNodes[getPlayer().getId() - 1];
@@ -68,12 +73,18 @@
 				} 
 			};
 
-			function functionDelegate(functionName, lat, lng)
+			function getPosition(lat, lng)
 			{
 				var wrapper = new Object();
 				wrapper.coords = new Object();
-				wrapper.coords.latitude = parseFloat(lat);
-				wrapper.coords.longitude = parseFloat(lng);
+				wrapper.coords.latitude = Number(lat);
+				wrapper.coords.longitude = Number(lng);
+				return wrapper;
+			}
+
+			function functionDelegate(functionName, lat, lng)
+			{
+				var wrapper = getPosition(lat, lng);
 				
 				functionName.call(self, wrapper);
 			}
@@ -327,7 +338,11 @@
 
 			function fitBounds(latLng)
 			{
-				_bounds.extend(latLng);
+				if(_bounds)
+					_bounds.extend(latLng);
+				else
+					_bounds = new google.maps.LatLngBounds(latLng, latLng)
+				
 				_map.fitBounds(_bounds);
 			}
 
@@ -452,14 +467,19 @@
 				}
 				else
 				{
-					var script = document.createElement("script");
-					script.setAttribute("type", "text/javascript");
-					script.setAttribute("src", "http://code.google.com/apis/gears/gears_init.js");
-					document.getElementsByTagName("head")[0].appendChild(script);
-					location = google.gears.factory.create('beta.geolocation');
-					geoImpl = 1;
-				}
-			
+					if(_simulation)
+						location = _simulation;
+					else
+					{
+						var script = document.createElement("script");
+						script.setAttribute("type", "text/javascript");
+						script.setAttribute("src", "http://code.google.com/apis/gears/gears_init.js");
+						document.getElementsByTagName("head")[0].appendChild(script);
+						location = google.gears.factory.create('beta.geolocation');
+						geoImpl = 1;
+					}
+				}														
+				
 				location.getCurrentPosition
 				(
 					function(position)
@@ -505,11 +525,7 @@
 							mapTypeId: google.maps.MapTypeId.ROADMAP
 						};
 			
-						_map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
-
-						//make sure current position is displayed
-						_bounds = new google.maps.LatLngBounds(myLatLng, myLatLng);
-						_map.fitBounds(_bounds);
+						_map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);					
 						
 						updatePosition(position);
 
@@ -518,10 +534,7 @@
 						//we need to call the function on their objects
 						//to have the correct context 
 						
-						if(_simulation)
-							_simulation.watchPosition(updatePosition); 
-						else
-							_watchID = location.watchPosition(updatePosition);
+						_watchID = location.watchPosition(updatePosition);
 		
 						//refresh the points every second
 						window.setInterval("getPoints()", 1000);
