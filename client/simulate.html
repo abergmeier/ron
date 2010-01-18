@@ -6,6 +6,8 @@
 		<script type="text/javascript" src="mimic.js"></script>
 		<script type="text/javascript">
 
+			var _lastServerPosition = new Array(Number(0.000001), Number(0.000001));
+		
 			//* Start of simulation block
 			//set the type of page			
 			var _simulation = new Simulation();
@@ -256,7 +258,6 @@
 		
 			//save the last servertime of a received update
 			var lastServerTime;
-			var lastServerPosition = new Array(0, 0);
 			var _marker;
 			var _bounds;
 
@@ -388,8 +389,8 @@
 				if(!responseParameters || !responseParameters.length)
 					return; //TODO: problem handling
 
-				lastServerPosition[0] = position.lat(); 
-				lastServerPosition[1] = position.lng();
+				_lastServerPosition[0] = position.lat(); 
+				_lastServerPosition[1] = position.lng();
 
 				var stateMap = responseParameters[0];
 
@@ -508,8 +509,8 @@
 						}
 
 						//position data was sent when created player
-						lastServerPosition[0] = coords.latitude;
-						lastServerPosition[1] = coords.longitude;
+						_lastServerPosition[0] = coords.latitude;
+						_lastServerPosition[1] = coords.longitude;
 
 						var myLatLng = new google.maps.LatLng(coords.latitude, coords.longitude);
 					
