@@ -263,7 +263,6 @@
 
 			var _watchID;
 			
-			var geoImpl; //which interface for location retrieval to use
 			//var ServerUrl = "http://ron.lcid-fire.org/server.php";
 			var serverUrl = "http://localhost:8081/";
 		
@@ -461,25 +460,18 @@
 			{
 				var location;
 				
-				if(navigator.geolocation)
-				{
+				if(_simulation)
+					location = _simulation;
+				else if(navigator.geolocation)
 					location = navigator.geolocation;
-					geoImpl = 0;
-				}
 				else
 				{
-					if(_simulation)
-						location = _simulation;
-					else
-					{
-						var script = document.createElement("script");
-						script.setAttribute("type", "text/javascript");
-						script.setAttribute("src", "http://code.google.com/apis/gears/gears_init.js");
-						document.getElementsByTagName("head")[0].appendChild(script);
-						location = google.gears.factory.create('beta.geolocation');
-						geoImpl = 1;
-					}
-				}														
+					var script = document.createElement("script");
+					script.setAttribute("type", "text/javascript");
+					script.setAttribute("src", "http://code.google.com/apis/gears/gears_init.js");
+					document.getElementsByTagName("head")[0].appendChild(script);
+					location = google.gears.factory.create('beta.geolocation');
+				}
 				
 				location.getCurrentPosition
 				(
