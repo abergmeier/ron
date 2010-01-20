@@ -108,38 +108,6 @@ implements Collection<Element>
 		}
 	}
 	
-	private static final int PS_TABLEEXISTS = getUniqueRandom();
-	
-	private boolean tableExists()
-	throws SQLException
-	{
-		PreparedStatement statement = getPreparedStatement
-		(
-			PS_TABLEEXISTS,
-			"SELECT 1 from sqlite_master WHERE type LIKE 'table' AND name LIKE ?"
-		);
-		
-		synchronized(statement)
-		{
-			statement.setString(1, getSQLTableName());
-			ResultSet result = statement.executeQuery();
-			
-			try
-			{
-				//attemt to select the first line
-				if(!result.next())
-					return false;
-				
-				result.getInt(1);
-				return !result.wasNull(); //when this succeeds we have at least one row
-			}
-			finally
-			{
-				result.close();
-			}
-		}
-	}
-	
 	public int size()
 	{
 		try
