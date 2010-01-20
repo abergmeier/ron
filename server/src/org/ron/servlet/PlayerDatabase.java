@@ -390,9 +390,6 @@ implements Set<Player>
 	{
 		Player player = (Player)object;
 		
-		if(player.getId() == null)
-			return false; //needs id to be saved
-		
 		try
 		{
 			return getString

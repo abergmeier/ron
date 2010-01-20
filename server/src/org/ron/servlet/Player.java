@@ -5,10 +5,8 @@ import java.util.Calendar;
 import org.ron.PositionCollision;
 
 public interface Player
-extends Position
+extends Position, IntegerIdObject
 {
-	public Integer getId();
-	
 	public String getName();
 
 	public Position getPosition();

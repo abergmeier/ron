@@ -9,7 +9,7 @@ import org.ron.PositionCollision;
 public class PlayerImpl
 implements Player
 {
-	private Integer _id;
+	private int _id;
 	private PlayerDatabase _database;
 	private String _name;
 
@@ -28,7 +28,7 @@ implements Player
 		return getId() == ((Player)object).getId();
 	}
 
-	public Integer getId()
+	public int getId()
 	{
 		return _id;
 	}

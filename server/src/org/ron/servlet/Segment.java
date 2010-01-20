@@ -3,12 +3,11 @@ package org.ron.servlet;
 import java.util.Calendar;
 
 public interface Segment
+extends IntegerIdObject
 {
 	public void set(int id, Node start, Node end, Calendar time);
 	
 	public Player getPlayer();
-	
-	public int getId();
 	
 	public Node getStart();
 	

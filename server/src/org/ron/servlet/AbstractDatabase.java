@@ -492,6 +492,21 @@ implements Collection<Element>
 			throw wrapInRuntimeException(exception);
 		}
 	}
+	
+	protected static String getIdList(Collection<?> objects)
+	{
+		String idList = null;
+		
+		for(IntegerIdObject object : (Collection<IntegerIdObject>)objects)
+		{
+			if(idList == null)
+				idList = ((Integer)object.getId()).toString();
+			
+			idList += "," + object.getId();
+		}
+		
+		return idList;
+	}
 /*	
 	public boolean remove(Object o)
 	{
