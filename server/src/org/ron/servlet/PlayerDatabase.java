@@ -420,65 +420,97 @@ implements Set<Player>
 	@Override
 	public boolean remove(Object object)
 	{
+		Connection connection = getConnection();
+		Savepoint save;
 		try
 		{
-			return deleteFromTable("ID = " + ((Player)object).getId()) > 0;
+			save = connection.setSavepoint();
+		}
+		catch (SQLException e1)
+		{
+			throw wrapInRuntimeException(e1);
+		}
+
+		Player player = (Player)object;
+		
+		try
+		{
+			//first remove all nodes of the player
+			_nodes.remove(player);
+			return deleteFromTable("ID = " + player.getId()) > 0;
 		}
 		catch(SQLException exception)
 		{
+			try
+			{
+				connection.rollback(save);
+			}
+			catch (SQLException e)
+			{
+				e.printStackTrace();
+			}
+			
 			throw wrapInRuntimeException(exception);
 		}
+		catch(RuntimeException exception)
+		{
+			try
+			{
+				connection.rollback(save);
+			}
+			catch (SQLException e)
+			{
+				e.printStackTrace();
+			}
+			
+			throw exception;
+		}
+		finally
+		{
+			try
+			{
+				connection.releaseSavepoint(save);
+			}
+			catch (SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
 	}
 	
 	@Override
-	public boolean removeAll(Collection<?> arg0)
+	public boolean removeAll(Collection<?> players)
 	{
-		boolean changed = false;
+		String idList = getIdList(players);
 		
-		for(Object object : arg0)
-		{
-			changed = remove(object) || changed; 
-		}
+		if(idList == null)
+			return false;
 		
-		return changed;
-	}
-
-	@Override
-	public boolean retainAll(Collection<?> arg0)
-	{
-		String playerIds = "";
-	
-		for(Object object : arg0)
-		{
-			if(!fromDatabase((Player)object))
-				continue;
-			
-			playerIds += ((Player)object).getId() + ",";
-		}
-		
-		if(playerIds.endsWith(","))
-			playerIds = playerIds.substring(0, playerIds.length() - 2);
-			
 		try
 		{
-			int changes = execute("DELETE FROM " + SQLTABLENAME + " WHERE ID NOT LIKE (" + playerIds + ")");
-			return changes > 0;
+			return deleteFromTable("ID NOT IN (" + idList + ")") > 0;
 		}
 		catch (SQLException e)
 		{
 			throw wrapInRuntimeException(e);
 		}
 	}
-	
-	protected boolean fromDatabase(Object object)
-	{
-		if(!(object instanceof Player))
-			return false; //wrong object
+
+	@Override
+	public boolean retainAll(Collection<?> players)
+	{		
+		String idList = getIdList(players);
 		
-		Player player = (Player)object;
-		if(player.getId() == null)
-			return false; //not in database yet
+		if(idList == null)
+			return false;
 		
-		return true;
+		try
+		{
+			return deleteFromTable("ID NOT IN (" + idList + ")") > 0;
+		}
+		catch (SQLException e)
+		{
+			throw wrapInRuntimeException(e);
+		}
 	}
 }

@@ -3,6 +3,7 @@ package org.ron.servlet;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Savepoint;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
@@ -400,6 +401,17 @@ extends AbstractDatabase<ViewSegment>
 		{
 			throw wrapInRuntimeException(exception);
 		}
+	}
+	
+	public boolean removeAllSegments(Collection<Segment> segments)
+	throws SQLException
+	{
+		String idList = getIdList(segments);
+		
+		if(idList == null)
+			return false;
+		
+		return deleteFromTable("SEGMENTID IN (" + idList + ")") > 0;
 	}
 
 	@Override

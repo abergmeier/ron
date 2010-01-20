@@ -3,11 +3,9 @@ package org.ron.servlet;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.sql.Savepoint;
 import java.sql.Statement;
 import java.util.Calendar;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.io.IOException;
 import javax.servlet.ServletException;
@@ -251,30 +249,7 @@ extends XmlRpcServlet
 	public boolean removePlayer(int playerId)
 	throws SQLException, ClassNotFoundException
 	{
-		Connection connection = _players.getConnection();
-		Savepoint save = connection.setSavepoint();
-		
-		try
-		{
-			//first remove all nodes of the player
-			_players.getNodes().clear();
-			_players.remove(_players.get(playerId));
-			return true;
-		}
-		catch(SQLException exception)
-		{
-			connection.rollback(save);
-			throw exception;
-		}
-		catch(RuntimeException exception)
-		{
-			connection.rollback(save);
-			throw exception;
-		}
-		finally
-		{
-			connection.releaseSavepoint(save);
-		}
+		return _players.remove(_players.get(playerId));
 	}
 }
 

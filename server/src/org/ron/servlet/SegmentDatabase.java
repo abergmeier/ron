@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Savepoint;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
 
@@ -432,18 +433,93 @@ extends AbstractDatabase<Segment>
 			throw wrapInRuntimeException(exception);
 		}
 	}
+	
+	public boolean removeAllNodes(Collection<Node> nodes)
+	throws SQLException
+	{
+		String idList = getIdList(nodes);
+		
+		if(idList == null)
+			return false; //no element found
+		
+		Savepoint save = getConnection().setSavepoint();
+		
+		try
+		{
+			ResultSet result = getWhere
+			(
+				"STARTNODE IN (" + idList + ") OR " +
+				"ENDNODE IN (" + idList + ")"
+			);
+			
+			try
+			{
+				return removeAll(result);
+			}
+			finally
+			{
+				result.close();
+			}	
+		}
+		finally
+		{
+			getConnection().releaseSavepoint(save);
+		}
+	}
+	
+	private boolean removeAll(ResultSet result)
+	throws SQLException
+	{
+		ArrayList<Segment> segments = new ArrayList<Segment>();
+		
+		while(result.next())
+		{			
+			segments.add(get(result));
+		}
+		
+		return removeAll(segments);
+	}
 
 	@Override
 	public boolean removeAll(Collection<?> objects)
 	{
-		boolean changed = false;
+		Collection<Segment> segments = (Collection<Segment>)objects;
 		
-		for(Object object : objects)
+		String idList = getIdList(segments);
+		
+		if(idList == null)
+			return false;
+		
+		Savepoint save;
+		try
 		{
-			changed = remove((Segment)object) || changed;
+			save = getConnection().setSavepoint();
+		}
+		catch(SQLException exception)
+		{
+			throw wrapInRuntimeException(exception);
 		}
 		
-		return changed;
+		try
+		{
+			_views.removeAllSegments(segments);
+			return deleteFromTable("ID IN (" + idList + ")") > 0;
+		}
+		catch(SQLException e)
+		{
+			throw wrapInRuntimeException(e);
+		}
+		finally
+		{
+			try
+			{
+				getConnection().releaseSavepoint(save);
+			}
+			catch (SQLException e)
+			{
+				e.printStackTrace();
+			}
+		}
 	}
 
 	@Override

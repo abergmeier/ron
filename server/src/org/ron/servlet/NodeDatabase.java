@@ -5,8 +5,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Savepoint;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.Set;
 
 public class NodeDatabase
@@ -323,6 +323,36 @@ implements Set<Node>
 	{
 		return size() == 0;
 	}
+	
+	public boolean remove(Player player)
+	throws SQLException
+	{
+		Savepoint save = getConnection().setSavepoint();
+				
+		try
+		{
+			ResultSet result = getWhere("PLAYERID = " + player.getId());
+			ArrayList<Node> nodes = new ArrayList<Node>();
+			
+			try
+			{				
+				while(result.next())
+				{
+					nodes.add(get(result));
+				}
+			}
+			finally
+			{
+				result.close();
+			}
+			
+			return removeAll(nodes);
+		}
+		finally
+		{
+			getConnection().releaseSavepoint(save);
+		}
+	}
 
 	@Override
 	public boolean remove(Object object)
@@ -344,58 +374,66 @@ implements Set<Node>
 		}
 	}
 
-	private String collectWhere(Collection<?> c)
-	{
-		Position position;
-		
-		if(c.size() == 0)
-			return null;
-		
-		String[] pairs = new String[c.size()];
-		
-		Iterator<?> iterator = c.iterator();
-		
-		for(int i = 0; i != pairs.length; i++)
-		{
-			position = (Position)iterator.next();
-			
-			pairs[i] = "LAT=" + position.getLatitude() + " AND LNG=" + position.getLongitude();
-		}
-			
-		String where = "(" + pairs[0] + ")";
-		
-		for(int i = 1; i != pairs.length; i++)
-		{
-			where += " OR (" + pairs[i] + ")";
-		}
-		
-		return where;
-	}
+	
 	
 	public boolean removeAll(Collection<?> c)
 	{
+		String idList = getIdList(c);
+		
+		if(idList == null)
+			return false;
+		
+		Savepoint save;
 		try
 		{
-			return deleteFromTable(collectWhere(c)) > 0;
+			save = getConnection().setSavepoint();
+		}
+		catch (SQLException e1)
+		{
+			throw wrapInRuntimeException(e1);
+		}
+		
+		try
+		{
+			_segments.removeAllNodes((Collection<Node>)c);
+			return deleteFromTable("ID IN (" + idList + ")") > 0;
 		}
 		catch (SQLException e)
 		{
 			throw wrapInRuntimeException(e);
 		}
+		finally
+		{
+			try
+			{
+				getConnection().releaseSavepoint(save);
+			}
+			catch (SQLException e)
+			{
+				throw wrapInRuntimeException(e);
+			}
+		}
+
 	}
 
 	public boolean retainAll(Collection<?> c)
 	{
-		String where = collectWhere(c);
+		throw new UnsupportedOperationException();
+		/*
+		String idList = getIdList(c);
+		
+		if(idList == null)
+			return false;
 		
 		try
 		{	
-			return deleteFromTable("NOT (" + where + ")") > 0;
+			return deleteFromTable("ID NOT IN (" + idList + ")") > 0;
 		}
 		catch (SQLException e)
 		{
 			throw wrapInRuntimeException(e);
 		}
+		*/
 	}
 	
 	public Node[] toArray(Player player)
