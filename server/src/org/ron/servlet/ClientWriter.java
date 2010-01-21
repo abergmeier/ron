@@ -36,10 +36,10 @@ public class ClientWriter
 			{
 				"segment",
 				segment.getId(),
-				segment.getStart().getLatitude(),
-				segment.getStart().getLongitude(),
-				segment.getEnd().getLatitude(),
-				segment.getEnd().getLongitude()
+				(double)segment.getStart().getLatitude(),
+				(double)segment.getStart().getLongitude(),
+				(double)segment.getEnd().getLatitude(),
+				(double)segment.getEnd().getLongitude()
 			}
 		);	
 	}
@@ -52,10 +52,10 @@ public class ClientWriter
 			{
 				"partial",
 				segment.getId(),
-				start.getX(),
-				start.getY(),
-				end.getX(),
-				end.getY()
+				(double)start.getX(),
+				(double)start.getY(),
+				(double)end.getX(),
+				(double)end.getY()
 			}
 		);
 	}
