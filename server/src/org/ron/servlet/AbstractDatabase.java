@@ -462,6 +462,8 @@ implements Collection<Element>
 		}
 	}
 	
+	protected abstract String getSQLIdColumn();
+	
 	protected abstract String getSQLFields();
 	
 	protected abstract String getSQLTableName();

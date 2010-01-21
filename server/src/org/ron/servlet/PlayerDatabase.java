@@ -32,6 +32,11 @@ implements Set<Player>
 		return _nodes;
 	}
 	
+	protected String getSQLIdColumn()
+	{
+		return SQLIDCOLUMN;
+	}
+	
 	protected String getSQLFields()
 	{
 		return SQLFIELDS;

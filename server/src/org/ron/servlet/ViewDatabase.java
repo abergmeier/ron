@@ -134,6 +134,12 @@ extends AbstractDatabase<ViewSegment>
 	{
 		return getFloat(result, 6);
 	}
+	
+	@Override
+	protected String getSQLIdColumn()
+	{
+		throw new UnsupportedOperationException();
+	}
 
 	@Override
 	protected String getSQLFields()

@@ -156,6 +156,12 @@ extends AbstractDatabase<Segment>
 	{
 		return result.getInt(3);
 	}
+	
+	@Override
+	protected String getSQLIdColumn()
+	{
+		return SQLIDCOLUMN;
+	}
 
 	@Override
 	protected String getSQLFields()

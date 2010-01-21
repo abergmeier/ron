@@ -36,6 +36,11 @@ implements Set<Node>
 		return _segments;
 	}
 	
+	protected String getSQLIdColumn()
+	{
+		return SQLIDCOLUMN;
+	}
+	
 	protected String getSQLFields()
 	{
 		return SQLFIELDS;
