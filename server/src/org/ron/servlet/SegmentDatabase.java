@@ -241,7 +241,7 @@ extends AbstractDatabase<Segment>
 				PS_GETPLAYER,
 				"SELECT " + SQLFIELDS + " " +
 				"FROM " + SQLTABLENAME + " " +
-				"WHERE ENDNODE IN (SELECT " + NodeDatabase.SQLTABLENAME + "." + NodeDatabase.SQLIDCOLUMN + " FROM " + NodeDatabase.SQLTABLENAME + " WHERE PLAYERID = ?) AND TIME >= ?" + 
+				"WHERE ENDNODE IN (SELECT " + NodeDatabase.SQLTABLENAME + "." + NodeDatabase.SQLIDCOLUMN + " FROM " + NodeDatabase.SQLTABLENAME + " WHERE PLAYERID = ?) AND TIME >= ? " + 
 				"ORDER BY " + SQLORDER
 			);
 			
@@ -254,6 +254,7 @@ extends AbstractDatabase<Segment>
 				
 				try
 				{
+					result.next();
 					for(int i = 0; result.next(); i++)
 					{
 						segments[i] = get(result);
