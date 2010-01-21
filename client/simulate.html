@@ -163,6 +163,8 @@
 			var _playerId;
 
 			var _map;
+			
+			var _location;
 
 			function Line(player)
 			{
@@ -456,7 +458,11 @@
 				var stateMap = responseParameters[0];
 				
 				if(stateMap["won"])
+				{
+					setUpdate(false);
 					alert("YOU HAVE WON!");
+					return;
+				}
 
 				lastServerTime = stateMap["time"];
 
@@ -523,22 +529,20 @@
 
 			function login()
 			{
-				var location;
-				
 				if(_simulation)
-					location = _simulation;
+					_location = _simulation;
 				else if(navigator.geolocation)
-					location = navigator.geolocation;
+					_location = navigator.geolocation;
 				else
 				{
 					var script = document.createElement("script");
 					script.setAttribute("type", "text/javascript");
 					script.setAttribute("src", "http://code.google.com/apis/gears/gears_init.js");
 					document.getElementsByTagName("head")[0].appendChild(script);
-					location = google.gears.factory.create('beta.geolocation');
+					_location = google.gears.factory.create('beta.geolocation');
 				}
 				
-				location.getCurrentPosition
+				_location.getCurrentPosition
 				(
 					function(position)
 					{
@@ -587,15 +591,7 @@
 						
 						updatePosition(position);
 
-						//be aware that delegation does not work in java
-						//as in other programming languages - therefor
-						//we need to call the function on their objects
-						//to have the correct context 
-						
-						_watchID = location.watchPosition(updatePosition);
-		
-						//refresh the points every second
-						window.setInterval("getPoints()", 1000);
+						setUpdate(true);
 
 						//user interaction not allowed for simulation
 						if(_simulation)
@@ -609,13 +605,35 @@
 					}
 				);  
 			}
+			
+			function setUpdate(bvalue)
+			{
+				if(bvalue)
+				{
+					//be aware that delegation does not work in java
+					//as in other programming languages - therefor
+					//we need to call the function on their objects
+					//to have the correct context 
+					
+					_watchID = _location.watchPosition(updatePosition);
+				
+					//refresh the points every second
+					window.setInterval("getPoints()", 1000);
+				}
+				else
+				{
+					window.clearInterval("getPoints()");
+					
+					if(_watchID && _location)
+						_location.clearWatch(_watchID);
+				}
+			}
 		
 			function logout()
 			{
-				if(_watchID && navigator.geolocation)
-					navigator.geolocation.clearWatch(_watchID);
-
-				window.clearInterval("getPoints()");
+			
+				setUpdate(false);
+				
 				removePlayer();
 			}
 			
