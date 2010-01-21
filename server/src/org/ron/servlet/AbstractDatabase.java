@@ -537,6 +537,56 @@ implements Collection<Element>
 		}
 	}
 	
+	private final int PS_GETINSERT = getUniqueRandom();
+	private final String PS_GETLAST =
+		"SELECT " + getSQLFields() + " " +
+		"FROM " + getSQLTableName() + " " +
+		"WHERE ROWID = last_insert_rowid()";
+	
+	protected Element getLastInserted()
+	throws SQLException
+	{
+		Savepoint save = getConnection().setSavepoint();
+		
+		try
+		{
+			PreparedStatement statement = getPreparedStatement
+			(
+				PS_GETINSERT,
+				PS_GETLAST
+			);
+			
+			synchronized(statement)
+			{	
+				ResultSet result = statement.executeQuery();
+				
+				try
+				{
+					if(result.next())
+						return get(result);
+					
+					return null;
+				}
+				finally
+				{
+					result.close();
+				}
+			}
+		}
+		catch(SQLException exception)
+		{
+			rollback(save);
+			throw exception;
+		}
+		catch(RuntimeException exception)
+		{
+			rollback(save);
+			throw exception;
+		}
+		finally
+		{
+			getConnection().releaseSavepoint(save);
+		}
 	}
 	
 	protected static String getIdList(Collection<?> objects)
