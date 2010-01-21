@@ -339,8 +339,11 @@
 					});
 				}
 
+				fitBounds();
+
 				//make sure marker is displayed
-				_map.panTo(myLatLng);
+
+				//_map.panTo(myLatLng);
 			}
 		
 			function submitPoint()
@@ -363,12 +366,29 @@
 
 			function fitBounds(latLng)
 			{
+				if(latLng)
+				{
+					if(_bounds)
+						_bounds.extend(latLng);
+					else
+						_bounds = new google.maps.LatLngBounds(latLng, latLng)
+				}
+			
+				var newBounds;
+
 				if(_bounds)
-					_bounds.extend(latLng);
+				{
+					newBounds = new google.maps.LatLngBounds
+					(
+						_bounds.getSouthWest(),
+						_bounds.getNorthEast()
+					);
+					newBounds.extend(_marker.getPosition());
+				}
 				else
-					_bounds = new google.maps.LatLngBounds(latLng, latLng)
+					newBounds = new google.maps.LatLngBounds(_marker.getPosition(), _marker.getPosition());
 				
-				_map.fitBounds(_bounds);
+				_map.fitBounds(newBounds);
 			}
 
 			function callForAll(player, segmentArray)
