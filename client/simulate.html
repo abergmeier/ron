@@ -417,6 +417,9 @@
 				_lastServerPosition[1] = position.lng();
 
 				var stateMap = responseParameters[0];
+				
+				if(stateMap["won"])
+					alert("YOU HAVE WON!");
 
 				lastServerTime = stateMap["time"];
 
