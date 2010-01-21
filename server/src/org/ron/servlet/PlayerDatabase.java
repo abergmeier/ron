@@ -445,20 +445,65 @@ implements Set<Player>
 		{
 			throw wrapInRuntimeException(e1);
 		}
-
+		
 		Player player = (Player)object;
 		
 		try
 		{
-			//first remove all nodes of the player
-			_nodes.remove(player);
-			return deleteFromTable("ID = " + player.getId()) > 0;
+			//check for other players
+			ResultSet result;
+			try
+			{
+				result = getWhere("ID <> " + player.getId());
+			}
+			catch (SQLException exception)
+			{
+				throw wrapInRuntimeException(exception);
+			}
+	
+			boolean allLost = true;
+			
+			try
+			{
+				while(result.next())
+				{
+					allLost = allLost && hasLost(result);
+				}
+			}
+			catch(SQLException exception)
+			{
+				throw wrapInRuntimeException(exception);
+			}
+			finally
+			{
+				try
+				{
+					result.close();
+				}
+				catch (SQLException e)
+				{
+					e.printStackTrace();
+				}
+			}
+			
+			//all have already lost - no dependencies anymore
+			//we can delete all players
+			if(allLost)
+			{
+				clear();
+				return true;
+			}
+			else
+			{
+				setLost(player, true);
+				return false;
+			}
 		}
 		catch(SQLException exception)
 		{
 			try
 			{
-				connection.rollback(save);
+				getConnection().rollback(save);
 			}
 			catch (SQLException e)
 			{
@@ -467,24 +512,11 @@ implements Set<Player>
 			
 			throw wrapInRuntimeException(exception);
 		}
-		catch(RuntimeException exception)
-		{
-			try
-			{
-				connection.rollback(save);
-			}
-			catch (SQLException e)
-			{
-				e.printStackTrace();
-			}
-			
-			throw exception;
-		}
 		finally
 		{
 			try
 			{
-				connection.releaseSavepoint(save);
+				getConnection().releaseSavepoint(save);
 			}
 			catch (SQLException e)
 			{
