@@ -14,6 +14,7 @@
 
 			function Simulation()
 			{
+				this.watches = new Array();
 				var player1Positions = new Object();
 				player1Positions[0 * 1000] = new google.maps.LatLng(53.089062, 8.785372);
 				player1Positions[3 * 1000] = new google.maps.LatLng(53.090448, 8.789685);
@@ -76,6 +77,16 @@
 					player4Nodes
 				);
 			};
+			
+			Simulation.prototype.clearWatch = function()
+			{
+				for(var i in this.watches)
+				{
+					self.clearTimeout(watches[i]);
+				}
+				
+				this.watches.splice(0, watches.length);
+			}
 
 			Simulation.prototype.getCurrentPosition = function(functionName)
 			{
@@ -89,14 +100,17 @@
 
 				for(var seconds in nodes)
 				{
-					self.setTimeout
+					this.watches.push
 					(
-						function()
-						{
-							submitPoint();
-						},
-						parseInt(seconds)		
-					);					
+						self.setTimeout
+						(
+							function()
+							{
+								submitPoint();
+							},
+							parseInt(seconds)
+						)
+					);
 				} 
 			};
 
@@ -126,14 +140,17 @@
 				
 				for(var seconds in positions)
 				{
-					self.setTimeout
+					this.watches.push
 					(
-						"functionDelegate(" + functionName + "," + positions[seconds].lat() + "," + positions[seconds].lng() + ");",
-						parseInt(seconds)
+						self.setTimeout
+						(
+							"functionDelegate(" + functionName + "," + positions[seconds].lat() + "," + positions[seconds].lng() + ");",
+							parseInt(seconds)
+						)
 					);
 				}
 					
-				return null;
+				return this.watches;
 			};
 
 			//* End of simulation block
