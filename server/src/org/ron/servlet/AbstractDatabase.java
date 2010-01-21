@@ -281,6 +281,12 @@ implements Collection<Element>
 		}
 	}
 	
+	protected Savepoint setSavepoint()
+	throws SQLException
+	{
+		return getConnection().setSavepoint();
+	}
+	
 	protected void rollback()
 	throws SQLException
 	{
@@ -288,9 +294,27 @@ implements Collection<Element>
 	}
 	
 	protected void rollback(Savepoint savepoint)
-	throws SQLException
 	{
-		getConnection().rollback(savepoint);
+		try
+		{
+			getConnection().rollback(savepoint);
+		}
+		catch (SQLException e)
+		{
+			e.printStackTrace();
+		}
+	}
+	
+	protected void releaseSavepoint(Savepoint savepoint)
+	{
+		try
+		{
+			getConnection().releaseSavepoint(savepoint);
+		}
+		catch (SQLException e)
+		{
+			e.printStackTrace();
+		}
 	}
 	
 	protected PreparedStatement getPreparedStatement(int key, String sql)
