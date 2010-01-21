@@ -245,7 +245,7 @@ implements Set<Player>
 				if(result.next())
 					return result;
 				
-				throw new SQLException("NO RESULT");
+				throw new NoResultException("NO RESULT");
 			}
 			catch(SQLException exception)
 			{
