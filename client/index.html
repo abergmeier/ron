@@ -6,19 +6,46 @@
 		<script type="text/javascript" src="mimic.js"></script>
 		<script type="text/javascript">
 
+			var _lastServerPosition = new Array(Number(0.000001), Number(0.000001));
+		
 			//* Start of simulation block
-			//set the type of page			
-			var _simulation;
+			//set the type of page
 
 			function Simulation()
 			{
+				this.watches = new Array();
 				var player1Positions = new Object();
 				player1Positions[0 * 1000] = new google.maps.LatLng(53.089062, 8.785372);
 				player1Positions[3 * 1000] = new google.maps.LatLng(53.090448, 8.789685);
 				player1Positions[7 * 1000] = new google.maps.LatLng(53.088898, 8.790016);
 				player1Positions[14 * 1000] = new google.maps.LatLng(53.088499, 8.792035);
 				player1Positions[15 * 1000] = new google.maps.LatLng(53.089146, 8.792739);
-				player1Positions[19 * 1000] = new google.maps.LatLng(53.090638, 8.791516);
+				player1Positions[19 * 1000] = new google.maps.LatLng(53.077432,8.837378);
+				player1Positions[19.5 * 1000] = new google.maps.LatLng(53.075189,8.836777);
+				player1Positions[20.0 * 1000] = new google.maps.LatLng(53.075963,8.834503);
+				player1Positions[20.5 * 1000] = new google.maps.LatLng(53.075653,8.832958);
+				player1Positions[21.0 * 1000] = new google.maps.LatLng(53.075705,8.83137);
+				player1Positions[21.5 * 1000] = new google.maps.LatLng(53.075447,8.830512);
+				player1Positions[22.0 * 1000] = new google.maps.LatLng(53.074957,8.829567);
+				player1Positions[22.5 * 1000] = new google.maps.LatLng(53.075086,8.827894);
+				player1Positions[23.0 * 1000] = new google.maps.LatLng(53.07457,8.828194);
+				player1Positions[23.5 * 1000] = new google.maps.LatLng(53.074132,8.831799);
+				player1Positions[24.0 * 1000] = new google.maps.LatLng(53.072869,8.831971);
+				player1Positions[24.5 * 1000] = new google.maps.LatLng(53.071347,8.829396);
+				player1Positions[25.0 * 1000] = new google.maps.LatLng(53.071038,8.831499);
+				player1Positions[25.5 * 1000] = new google.maps.LatLng(53.068717,8.829267);
+				player1Positions[26.0 * 1000] = new google.maps.LatLng(53.068821,8.824632);
+				player1Positions[26.5 * 1000] = new google.maps.LatLng(53.0706,8.823988);
+				player1Positions[27.0 * 1000] = new google.maps.LatLng(53.070626,8.822272);
+				player1Positions[27.5 * 1000] = new google.maps.LatLng(53.071554,8.821757);
+				player1Positions[28.0 * 1000] = new google.maps.LatLng(53.072611,8.821285);
+				player1Positions[28.5 * 1000] = new google.maps.LatLng(53.073591,8.820899);
+				player1Positions[29.0 * 1000] = new google.maps.LatLng(53.073797,8.822057);
+				player1Positions[29.5 * 1000] = new google.maps.LatLng(53.074983,8.822572);
+				player1Positions[30.0 * 1000] = new google.maps.LatLng(53.075086,8.82416);
+				player1Positions[30.5 * 1000] = new google.maps.LatLng(53.076324,8.824933);
+				player1Positions[31.0 * 1000] = new google.maps.LatLng(53.076736,8.824246);
+				player1Positions[31.5 * 1000] = new google.maps.LatLng(53.0772,8.823431);
 				
 				var player2Positions = new Object();				
 				var player3Positions = new Object();
@@ -49,6 +76,21 @@
 					player4Nodes
 				);
 			};
+			
+			Simulation.prototype.clearWatch = function()
+			{
+				for(var i in this.watches)
+				{
+					self.clearTimeout(watches[i]);
+				}
+				
+				this.watches.splice(0, watches.length);
+			}
+
+			Simulation.prototype.getCurrentPosition = function(functionName)
+			{
+				functionName(getPosition(_lastServerPosition[0], _lastServerPosition[1]));
+			}
 
 			Simulation.prototype.onClick = function()
 			{
@@ -57,23 +99,32 @@
 
 				for(var seconds in nodes)
 				{
-					self.setTimeout
+					this.watches.push
 					(
-						function()
-						{
-							submitPoint();
-						},
-						parseInt(seconds)		
-					);					
+						self.setTimeout
+						(
+							function()
+							{
+								submitPoint();
+							},
+							parseInt(seconds)
+						)
+					);
 				} 
 			};
 
-			function functionDelegate(functionName, lat, lng)
+			function getPosition(lat, lng)
 			{
 				var wrapper = new Object();
 				wrapper.coords = new Object();
-				wrapper.coords.latitude = parseFloat(lat);
-				wrapper.coords.longitude = parseFloat(lng);
+				wrapper.coords.latitude = Number(lat);
+				wrapper.coords.longitude = Number(lng);
+				return wrapper;
+			}
+
+			function functionDelegate(functionName, lat, lng)
+			{
+				var wrapper = getPosition(lat, lng);
 				
 				functionName.call(self, wrapper);
 			}
@@ -88,14 +139,17 @@
 				
 				for(var seconds in positions)
 				{
-					self.setTimeout
+					this.watches.push
 					(
-						"functionDelegate(" + functionName + "," + positions[seconds].lat() + "," + positions[seconds].lng() + ");",
-						parseInt(seconds)
+						self.setTimeout
+						(
+							"functionDelegate(" + functionName + "," + positions[seconds].lat() + "," + positions[seconds].lng() + ");",
+							parseInt(seconds)
+						)
 					);
 				}
 					
-				return null;
+				return this.watches;
 			};
 
 			//* End of simulation block
@@ -103,11 +157,13 @@
 			//use object for associative array - works better
 			var _players = new Object();
 			_players.length = 0;
-			var colors = new Array("#000000", "#0000FF", "#FF0000", "#FFFF00", "00FF00");
+			var colors = new Array("#000000", "#0000FF", "#FF0000", "#FFFF00", "#00FF00", "#00FFFF", "#FF00FF");
 
 			var _playerId;
 
 			var _map;
+			
+			var _location;
 
 			function Line(player)
 			{
@@ -245,13 +301,11 @@
 		
 			//save the last servertime of a received update
 			var lastServerTime;
-			var lastServerPosition = new Array(0, 0);
 			var _marker;
 			var _bounds;
 
 			var _watchID;
 			
-			var geoImpl; //which interface for location retrieval to use
 			//var ServerUrl = "http://ron.lcid-fire.org/server.php";
 			var serverUrl = "http://localhost:8081/";
 		
@@ -303,8 +357,11 @@
 					});
 				}
 
+				fitBounds();
+
 				//make sure marker is displayed
-				_map.panTo(myLatLng);
+
+				//_map.panTo(myLatLng);
 			}
 		
 			function submitPoint()
@@ -324,84 +381,45 @@
 				
 				getPlayer().addLine(segmentArray[0], segmentArray[1], segmentArray[2], segmentArray[3], segmentArray[4]);
 			}
-		
-			/*function displayPoints(player_id)
-			{
-				var player = _players[player_id];
 
-				if(!player)
-				{
-					alert("No player with id" + player_id);
-					return;
-				}
-		
-				var path = player.Lines[].getPath();
-				
-				for(var i = 1; i < arguments.length; i += 2)
-				{
-					// Because path is an MVCArray, we can simply append a new coordinate
-					// and it will automatically appear
-					var latLng = new google.maps.LatLng(arguments[i], arguments[i + 1]);
-					path.insertAt(path.getLength(), latLng);
-					
-					//make sure map is centered so point is visible
-					fitBounds(latLng);
-				}
-			}*/
-			
-			function createXml(markup)
-			{
-				if(!markup)
-					return null;
-				
-				var doc;
-
-				if(window.DOMParser)
-				{
-					var parser = new DOMParser();
-					doc = parser.parseFromString(markup, "text/xml");
-				}
-				else
-				{
-					//IE way
-					doc = new ActiveXObject("Microsoft.XMLDOM"); 
-					doc.async = "false";
-					doc.loadXML(markup);
-				}
-				
-				return doc;
-			}
-			
 			function fitBounds(latLng)
 			{
-				_bounds.extend(latLng);
-				_map.fitBounds(_bounds);
+				if(latLng)
+				{
+					if(_bounds)
+						_bounds.extend(latLng);
+					else
+						_bounds = new google.maps.LatLngBounds(latLng, latLng)
+				}
+			
+				var newBounds;
+
+				if(_bounds)
+				{
+					newBounds = new google.maps.LatLngBounds
+					(
+						_bounds.getSouthWest(),
+						_bounds.getNorthEast()
+					);
+					newBounds.extend(_marker.getPosition());
+				}
+				else
+					newBounds = new google.maps.LatLngBounds(_marker.getPosition(), _marker.getPosition());
+				
+				_map.fitBounds(newBounds);
 			}
 
-			function callForAll(player, elements, callback)
+			function callForAll(player, segmentArray)
 			{
-				var rootElement;
-				var rootElementId;
-				var start;
-				var end;
-				
-				for(var i = 0; i != collection.length; i++)
+				for(var index in segmentArray)
 				{
-					rootElement = elements[i];
-					rootElementId = rootElement.getAttribute("id");
-	
-					start = rootElement.getElementsByTagName("start")[0];
-					end = rootElement.getElementsByTagName("end")[0];
+					var segmentData = segmentArray[index];
 
-					callback
-					(
-						player,
-						rootElementId,
-						parseFloat(start.getAttribute("lat")),
-						parseFloat(start.getAttribute("lng")),
-						parseFloat(end.getAttribute("lat")),
-						parseFloat(end.getAttribute("lng"))
-					);
+					if(segmentData[0] == "segment")
+						player.addLine(player, segmentData[1], segmentData[2], segmentData[3], segmentData[4], segmentData[5]);
+					else
+						player.addPartialLine(player, segmentData[1], segmentData[2], segmentData[3], segmentData[4], segmentData[5]);
+					
 				}
 			}
 
@@ -433,37 +451,30 @@
 				if(!responseParameters || !responseParameters.length)
 					return; //TODO: problem handling
 
-				lastServerPosition[0] = position.lat(); 
-				lastServerPosition[1] = position.lng();
+				_lastServerPosition[0] = position.lat(); 
+				_lastServerPosition[1] = position.lng();
 
-				var responseDocument = createXml(responseParameters[0]);
-
-				if(!responseDocument)
-					return; //TODO: handle problem
+				var stateMap = responseParameters[0];
 				
-				var stateElement = responseDocument.getElementsByTagName("state")[0];
+				if(stateMap["won"])
+				{
+					setUpdate(false);
+					alert("YOU HAVE WON!");
+					return;
+				}
 
-				if(!stateElement)
-					return; //TODO: handle problem
-					
-				lastServerTime = parseInt(stateElement.getAttribute("time"));
-			
-				var playerElements = responseDocument.getElementsByTagName("player");
-				var id;
+				lastServerTime = stateMap["time"];
+
+				var playerData = stateMap["data"];
 				var player;
 							
 				//process all received player data
-				for(var i = 0; i != playerElements.length; i++)
+				for(var playerId in playerData)
 				{
-					id = playerElements[i].getAttribute("id");
-
-					player = getPlayerById(id);
+					player = getPlayerById(playerId);
 
 					//process whole segments
-					callForAll(player, playerElements[i].getElementsByTagName("segment"), addLine);
-
-					//process partial segments
-					callForAll(player, playerElements[i].getElementsByTagName("partial"), addPartialLine);
+					callForAll(player, playerData[playerId]);
 				}
 			}
 
@@ -517,24 +528,20 @@
 
 			function login()
 			{
-				var location;
-				
-				if(navigator.geolocation)
-				{
-					location = navigator.geolocation;
-					geoImpl = 0;
-				}
+				if(false)
+					_location = new Simulation();
+				else if(navigator.geolocation)
+					_location = navigator.geolocation;
 				else
 				{
 					var script = document.createElement("script");
 					script.setAttribute("type", "text/javascript");
 					script.setAttribute("src", "http://code.google.com/apis/gears/gears_init.js");
 					document.getElementsByTagName("head")[0].appendChild(script);
-					location = google.gears.factory.create('beta.geolocation');
-					geoImpl = 1;
+					_location = google.gears.factory.create('beta.geolocation');
 				}
-			
-				location.getCurrentPosition
+				
+				_location.getCurrentPosition
 				(
 					function(position)
 					{
@@ -562,8 +569,8 @@
 						}
 
 						//position data was sent when created player
-						lastServerPosition[0] = coords.latitude;
-						lastServerPosition[1] = coords.longitude;
+						_lastServerPosition[0] = coords.latitude;
+						_lastServerPosition[1] = coords.longitude;
 
 						var myLatLng = new google.maps.LatLng(coords.latitude, coords.longitude);
 					
@@ -579,26 +586,11 @@
 							mapTypeId: google.maps.MapTypeId.ROADMAP
 						};
 			
-						_map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);
-
-						//make sure current position is displayed
-						_bounds = new google.maps.LatLngBounds(myLatLng, myLatLng);
-						_map.fitBounds(_bounds);
+						_map = new google.maps.Map(document.getElementById("map_canvas"), myOptions);					
 						
 						updatePosition(position);
 
-						//be aware that delegation does not work in java
-						//as in other programming languages - therefor
-						//we need to call the function on their objects
-						//to have the correct context 
-						
-						if(_simulation)
-							_simulation.watchPosition(updatePosition); 
-						else
-							_watchID = location.watchPosition(updatePosition);
-		
-						//refresh the points every second
-						window.setInterval("getPoints()", 1000);
+						setUpdate(true);
 
 						//user interaction not allowed for simulation
 						if(_simulation)
@@ -612,13 +604,35 @@
 					}
 				);  
 			}
+			
+			function setUpdate(bvalue)
+			{
+				if(bvalue)
+				{
+					//be aware that delegation does not work in java
+					//as in other programming languages - therefor
+					//we need to call the function on their objects
+					//to have the correct context 
+					
+					_watchID = _location.watchPosition(updatePosition);
+				
+					//refresh the points every second
+					window.setInterval("getPoints()", 1000);
+				}
+				else
+				{
+					window.clearInterval("getPoints()");
+					
+					if(_watchID && _location)
+						_location.clearWatch(_watchID);
+				}
+			}
 		
 			function logout()
 			{
-				if(_watchID && navigator.geolocation)
-					navigator.geolocation.clearWatch(_watchID);
-
-				window.clearInterval("getPoints()");
+			
+				setUpdate(false);
+				
 				removePlayer();
 			}
 			
@@ -629,7 +643,7 @@
 		</style>
 	</head>
 	<body onload="login()" onunload="logout()">
-		<div id="map_canvas"/>
+		<div id="map_canvas"></div>
 	</body>
 </html>
 
