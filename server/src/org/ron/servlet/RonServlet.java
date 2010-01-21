@@ -159,8 +159,7 @@ extends XmlRpcServlet
 	throws SQLException, ClassNotFoundException
 	{
 		Player player = _players.get(playerId);
-		_players.getNodes().addForPlayerPosition(player);
-		Segment segment = _players.getNodes().getSegments().getLast(player);
+		Segment segment = _players.getNodes().addForPlayerPosition(player);
 		
 		if(segment == null)
 			return new Object[0];

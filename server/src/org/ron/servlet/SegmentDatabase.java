@@ -81,35 +81,6 @@ extends AbstractDatabase<Segment>
 	
 	private static final int PS_GETLAST = getUniqueRandom();
 	
-	protected Segment getLast(Player player)
-	throws SQLException
-	{
-		PreparedStatement statement = getPreparedStatement
-		(
-			PS_GETLAST,
-			"SELECT " + SQLFIELDS + " " + 
-			"FROM " + SQLTABLENAME + " " +
-			"WHERE ENDNODE IN (SELECT " + NodeDatabase.SQLTABLENAME + "." + NodeDatabase.SQLIDCOLUMN + " FROM " + NodeDatabase.SQLTABLENAME + " WHERE PLAYERID = ?) " +
-			"ORDER BY ENDNODE DESC," + SQLORDER + " " +
-			"LIMIT 1"
-		);
-		
-		statement.setInt(1, player.getId());
-		
-		ResultSet result = statement.executeQuery();
-		try
-		{
-			if(!result.next())
-				return null; //no segment yet present
-			
-			return get(result);
-		}
-		finally
-		{
-			result.close();
-		}
-	}
-	
 	protected Segment get(int segmentId)
 	throws SQLException
 	{
@@ -198,27 +169,20 @@ extends AbstractDatabase<Segment>
 	
 	private static final int PS_INSERT = getUniqueRandom();
 	
-	public boolean add(Node startNode, Node endNode)
+	public Segment add(Node startNode, Node endNode)
 	throws SQLException
 	{
 		return add(startNode.getId(), endNode.getId());
 	}
 	
-	public boolean add(int startNodeId, int endNodeId)
+	public Segment add(int startNodeId, int endNodeId)
 	throws SQLException
 	{
 		Savepoint save = getConnection().setSavepoint();
-		/*
-		boolean autoCommit = getConnection().getAutoCommit();
-		getConnection().setAutoCommit(false);
-		*/
-		
-		PreparedStatement statement = null;
-		//boolean commited = false;
 		
 		try
 		{
-			statement = getPreparedStatement
+			PreparedStatement statement = getPreparedStatement
 			(
 				PS_INSERT,
 				"INSERT INTO " + SQLTABLENAME + " " + 
@@ -235,8 +199,7 @@ extends AbstractDatabase<Segment>
 				statement.executeUpdate();
 			}
 			
-			//commited = commit();
-			return true;
+			return getLastInserted();
 		}
 		catch(SQLException exception)
 		{
@@ -250,12 +213,6 @@ extends AbstractDatabase<Segment>
 		}
 		finally
 		{
-			/*
-			if(!commited)
-				rollback();
-			
-			getConnection().setAutoCommit(autoCommit);
-			*/
 			getConnection().releaseSavepoint(save);
 		}
 	}

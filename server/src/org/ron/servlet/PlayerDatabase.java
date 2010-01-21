@@ -342,8 +342,6 @@ implements Set<Player>
 	throws SQLException
 	{
 		Savepoint save = getConnection().setSavepoint();
-		//boolean autoCommit = getConnection().getAutoCommit();
-		//getConnection().setAutoCommit(false);
 		
 		try
 		{
@@ -354,21 +352,7 @@ implements Set<Player>
 				"('" + playerName + "'," + lat + "," + lng + ");"
 			);
 			
-			int id;
-			
-			ResultSet result = null;
-			
-			try
-			{
-				result = getWhere("NAME = '" + playerName + "'");
-				id = getPlayerId(result);
-			}
-			finally
-			{
-				finallyCloseStatement(result);
-			}
-			
-			return get(id);
+			return getLastInserted();
 		}
 		catch(SQLException exception)
 		{

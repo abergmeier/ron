@@ -93,41 +93,33 @@ implements Set<Node>
 	private static final int PS_INSERTKEY = getUniqueRandom();
 	private static final int PS_INSERTSELECTKEY = getUniqueRandom();
 	
-	public boolean addForPlayerPosition(Player player)
+	public Segment addForPlayerPosition(Player player)
 	throws SQLException
 	{
-		PreparedStatement statement = null;
-		
 		Savepoint save = getConnection().setSavepoint();
-		/*
-		getConnection().setAutoCommit(false);
-		boolean commited = false;
-		*/
 		
 		try
 		{
-			statement = getPreparedStatement
+			PreparedStatement statement = getPreparedStatement
 			(
 				PS_INSERTKEY,
 				"INSERT INTO " + SQLTABLENAME + " " + 
 				"(PLAYERID, LAT, LNG) VALUES " +
 				"(?, ?, ?);"
 			);
-
+			
 			Position position = player.getPosition();
 			float lat = position.getLatitude();
 			float lng = position.getLongitude();
-			
+				
 			synchronized(statement)
 			{
 				statement.setInt(1, player.getId());
 				statement.setFloat(2, lat);
 				statement.setFloat(3, lng);
 				statement.execute();
-				
-				statement.close(); //cleanup executed statement
 			}
-			
+	
 			//get the last 2 nodes
 			statement = getPreparedStatement
 			(
@@ -156,7 +148,7 @@ implements Set<Node>
 					Node endNode = get(result);
 						
 					if(!result.next())
-						return true; //we're done
+						return null; //we're done
 					
 					Node startNode = get(result);
 					
@@ -166,13 +158,11 @@ implements Set<Node>
 					}
 					catch(NullPointerException exception)
 					{
-						return true; //no row returned - done
+						return null; //no row returned - done
 					}
 				
 					//there's more than one node so create segments
-					boolean returnValue = _segments.add(startNode, endNode);
-					//commited = commit();
-					return returnValue;
+					return _segments.add(startNode, endNode);
 				}
 				finally
 				{
