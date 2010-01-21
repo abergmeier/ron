@@ -9,8 +9,7 @@
 			var _lastServerPosition = new Array(Number(0.000001), Number(0.000001));
 		
 			//* Start of simulation block
-			//set the type of page			
-			var _simulation = new Simulation();
+			//set the type of page
 
 			function Simulation()
 			{
@@ -529,8 +528,8 @@
 
 			function login()
 			{
-				if(_simulation)
-					_location = _simulation;
+				if(true)
+					_location = new Simulation();
 				else if(navigator.geolocation)
 					_location = navigator.geolocation;
 				else
