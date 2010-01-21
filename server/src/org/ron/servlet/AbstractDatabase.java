@@ -475,6 +475,11 @@ implements Collection<Element>
 	protected abstract void createTable()
 	throws SQLException;
 	
+	protected Collection<?> getDependentDatabase()
+	{
+		return null;
+	}
+	
 	public void clear()
 	{
 		try

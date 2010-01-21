@@ -378,8 +378,12 @@ implements Set<Node>
 			throw wrapInRuntimeException(exception);
 		}
 	}
-
 	
+	@Override
+	protected Collection<?> getDependentDatabase()
+	{
+		return _segments;
+	}
 	
 	public boolean removeAll(Collection<?> c)
 	{

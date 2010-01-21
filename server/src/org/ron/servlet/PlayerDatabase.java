@@ -423,6 +423,12 @@ implements Set<Player>
 	}
 	
 	@Override
+	public Collection<?> getDependentDatabase()
+	{
+		return _nodes;
+	}
+	
+	@Override
 	public boolean remove(Object object)
 	{
 		Connection connection = getConnection();

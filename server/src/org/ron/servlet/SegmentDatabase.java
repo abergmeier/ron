@@ -485,6 +485,12 @@ extends AbstractDatabase<Segment>
 		
 		return removeAll(segments);
 	}
+	
+	@Override
+	protected Collection<?> getDependentDatabase()
+	{
+		return _views;
+	}
 
 	@Override
 	public boolean removeAll(Collection<?> objects)
