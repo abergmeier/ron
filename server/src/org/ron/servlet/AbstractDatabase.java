@@ -223,27 +223,45 @@ implements Collection<Element>
 	
 	public Iterator<Element> iterator()
 	{
-		ResultSet result = null; 
+		Savepoint save;
+		try
+		{
+			save = setSavepoint();
+		}
+		catch (SQLException e1)
+		{
+			throw wrapInRuntimeException(e1);
+		}
 		
 		try
 		{
-			result = getAll();
-			ArrayList<Element> nodes = new ArrayList<Element>(size());
+			ResultSet result = null; 
 			
-			while(result.next())
+			try
 			{
-				nodes.add(get(result));
+				result = getAll();
+				ArrayList<Element> nodes = new ArrayList<Element>(size());
+				
+				while(result.next())
+				{
+					nodes.add(get(result));
+				}
+				
+				return nodes.iterator();
 			}
-			
-			return nodes.iterator();
+			finally
+			{
+				result.close();
+			}
 		}
-		catch (SQLException e)
+		catch(SQLException exception)
 		{
-			throw wrapInRuntimeException(e);
+			rollback(save);			
+			throw wrapInRuntimeException(exception); 
 		}
 		finally
 		{
-			finallyCloseStatement(result);
+			releaseSavepoint(save);
 		}
 	}
 	
