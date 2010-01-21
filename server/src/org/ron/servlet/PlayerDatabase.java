@@ -192,7 +192,27 @@ implements Set<Player>
 	public boolean hasLost(Player player)
 	throws SQLException
 	{
-		return (getPlayerBits(player) & BIT_LOST) == BIT_LOST;
+		try
+		{
+			return (getPlayerBits(player) & BIT_LOST) == BIT_LOST;
+		}
+		catch(NoResultException exception)
+		{
+			return true;
+		}
+	}
+	
+	protected boolean hasLost(ResultSet result)
+	throws SQLException
+	{
+		try
+		{
+			return (getPlayerBits(result) & BIT_LOST) == BIT_LOST;
+		}
+		catch(NoResultException exception)
+		{
+			return true;
+		}
 	}
 	
 	public void setLost(Player player, boolean set)
