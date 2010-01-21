@@ -500,14 +500,43 @@ implements Collection<Element>
 	
 	public void clear()
 	{
+		Savepoint save;
+		try
+		{		
+			save = setSavepoint();
+		}
+		catch (SQLException e)
+		{
+			throw wrapInRuntimeException(e);
+		}
+		
 		try
 		{
+			//attemt to clear all dependencies first
+			Collection<?> dependent = getDependentDatabase();
+			
+			if(dependent != null)
+				dependent.clear();
+			
+			//now really delete
 			deleteFromTable("1=1");
 		}
 		catch(SQLException exception)
 		{
+			rollback(save);
 			throw wrapInRuntimeException(exception);
 		}
+		catch(RuntimeException exception)
+		{
+			rollback(save);
+			throw exception;
+		}
+		finally
+		{
+			releaseSavepoint(save);
+		}
+	}
+	
 	}
 	
 	protected static String getIdList(Collection<?> objects)
