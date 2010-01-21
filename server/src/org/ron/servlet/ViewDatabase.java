@@ -223,10 +223,10 @@ extends AbstractDatabase<ViewSegment>
 			if(!isWhole)
 			{
 				//set partial segment
-				statement.setFloat(2, startLat);
-				statement.setFloat(3, startLng);
-				statement.setFloat(4, endLat);
-				statement.setFloat(5, endLng);
+				statement.setFloat(3, startLat);
+				statement.setFloat(4, startLng);
+				statement.setFloat(5, endLat);
+				statement.setFloat(6, endLng);
 			}
 			
 			return statement.executeUpdate() > 0;
