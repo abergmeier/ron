@@ -283,7 +283,7 @@ extends AbstractDatabase<Segment>
 		}
 		finally
 		{
-			getConnection().releaseSavepoint(save);
+			releaseSavepoint(save);
 		}
 	}
 
