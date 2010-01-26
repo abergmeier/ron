@@ -147,7 +147,15 @@ public class Collision
 			
 				if(distance.length() == 0)
 					throw new PositionCollision();
-				else if(distance.length() > r)
+				
+				//we're done here with collision processing
+				//only go on when a radius needs to be processed
+				if(r == 0)
+					return false; //we're done (did collision testing only)
+				else if(r < 0)
+					r = Math.abs(r); //negative is the same as positive radius
+				
+				if(distance.length() > r)
 					return false; //not in circle
 				else if(distance.length() == r)
 				{
