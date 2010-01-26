@@ -125,6 +125,18 @@ implements Player
 		}
 	}
 	
+	public void testCollision(Segment[] segments)
+	throws PositionCollision
+	{
+		Position position = getPosition();
+		Vector2f posVector = new Vector2f(position.getLatitude(), position.getLongitude());
+		
+		for(Segment segment : segments)
+		{
+			Collision.testCollision(posVector, segment.getStart().toVector(), segment.getEnd().toVector());
+		}
+	}
+	
 	public void getUpdate(ClientWriter writer, Segment[] segments)
 	throws PositionCollision
 	{

@@ -200,21 +200,15 @@ public class Collision
 		}
 	}
 	
-	public static boolean GetIntersections(Vector2f midCircle, Vector2f A, Vector2f B, Vector2f[] colResult)
-	throws PositionCollision
-	{
-		return GetIntersections(midCircle, RADIUS, A, B, colResult);
-	}
-	
-	public static boolean GetIntersections(float lat, float lng, Vector2f A, Vector2f B, Vector2f[] colResult)
-	throws PositionCollision
-	{
-		return GetIntersections(new Vector2f(lat, lng), A, B, colResult);
-	}
-
 	public static boolean GetIntersections(Vector2f midCircle, float r, Vector2f A, Vector2f B, Vector2f[] colResult)
 	throws PositionCollision
 	{
 		return CircleSegmentIntersect(midCircle, r, A, B, colResult);
+	}
+	
+	public static void testCollision(Vector2f midCircle, Vector2f A, Vector2f B)
+	throws PositionCollision
+	{
+		CircleSegmentIntersect(midCircle, 0, A, B, null);
 	}
 }

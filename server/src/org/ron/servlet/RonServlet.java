@@ -200,15 +200,19 @@ extends XmlRpcServlet
 			
 			for(Player otherPlayer : _players)
 			{
+				segments = otherPlayer.getSegments();
+				
 				if(otherPlayer.equals(player))
+				{
+					//for the player we only need to do collision detection
+					player.testCollision(segments);
 					continue; //we already have all data of current player on device
+				}
 			
 				if(allLost == null)
 					allLost = true;
 				
 				allLost = allLost && otherPlayer.hasLost();
-			
-				segments = otherPlayer.getSegments(updateCalendar);
 				
 				for(Segment segment : segments)
 				{
