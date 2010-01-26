@@ -15,41 +15,422 @@
 			{
 				this.watches = new Array();
 				var player1Positions = new Object();
-				player1Positions[0 * 1000] = new google.maps.LatLng(53.089062, 8.785372);
-				player1Positions[3 * 1000] = new google.maps.LatLng(53.090448, 8.789685);
-				player1Positions[7 * 1000] = new google.maps.LatLng(53.088898, 8.790016);
-				player1Positions[14 * 1000] = new google.maps.LatLng(53.088499, 8.792035);
-				player1Positions[15 * 1000] = new google.maps.LatLng(53.089146, 8.792739);
-				player1Positions[19 * 1000] = new google.maps.LatLng(53.077432,8.837378);
-				player1Positions[19.5 * 1000] = new google.maps.LatLng(53.075189,8.836777);
-				player1Positions[20.0 * 1000] = new google.maps.LatLng(53.075963,8.834503);
-				player1Positions[20.5 * 1000] = new google.maps.LatLng(53.075653,8.832958);
-				player1Positions[21.0 * 1000] = new google.maps.LatLng(53.075705,8.83137);
-				player1Positions[21.5 * 1000] = new google.maps.LatLng(53.075447,8.830512);
-				player1Positions[22.0 * 1000] = new google.maps.LatLng(53.074957,8.829567);
-				player1Positions[22.5 * 1000] = new google.maps.LatLng(53.075086,8.827894);
-				player1Positions[23.0 * 1000] = new google.maps.LatLng(53.07457,8.828194);
-				player1Positions[23.5 * 1000] = new google.maps.LatLng(53.074132,8.831799);
-				player1Positions[24.0 * 1000] = new google.maps.LatLng(53.072869,8.831971);
-				player1Positions[24.5 * 1000] = new google.maps.LatLng(53.071347,8.829396);
-				player1Positions[25.0 * 1000] = new google.maps.LatLng(53.071038,8.831499);
-				player1Positions[25.5 * 1000] = new google.maps.LatLng(53.068717,8.829267);
-				player1Positions[26.0 * 1000] = new google.maps.LatLng(53.068821,8.824632);
-				player1Positions[26.5 * 1000] = new google.maps.LatLng(53.0706,8.823988);
-				player1Positions[27.0 * 1000] = new google.maps.LatLng(53.070626,8.822272);
-				player1Positions[27.5 * 1000] = new google.maps.LatLng(53.071554,8.821757);
-				player1Positions[28.0 * 1000] = new google.maps.LatLng(53.072611,8.821285);
-				player1Positions[28.5 * 1000] = new google.maps.LatLng(53.073591,8.820899);
-				player1Positions[29.0 * 1000] = new google.maps.LatLng(53.073797,8.822057);
-				player1Positions[29.5 * 1000] = new google.maps.LatLng(53.074983,8.822572);
-				player1Positions[30.0 * 1000] = new google.maps.LatLng(53.075086,8.82416);
-				player1Positions[30.5 * 1000] = new google.maps.LatLng(53.076324,8.824933);
-				player1Positions[31.0 * 1000] = new google.maps.LatLng(53.076736,8.824246);
-				player1Positions[31.5 * 1000] = new google.maps.LatLng(53.0772,8.823431);
-				
-				var player2Positions = new Object();				
+				player1Positions[0 * 1000] = new google.maps.LatLng(  53.088075,    8.808464);
+				player1Positions[3 * 1000] = new google.maps.LatLng(  53.088319,    8.809034);
+				player1Positions[7 * 1000] = new google.maps.LatLng(  53.088606,    8.809649);
+				player1Positions[14 * 1000] = new google.maps.LatLng(  53.088850,    8.810189);
+
+				player1Positions[15 * 1000] = new google.maps.LatLng(  53.089095,    8.810706); //WP1
+
+				player1Positions[19 * 1000] = new google.maps.LatLng(  53.089389,    8.810377);
+				player1Positions[19.5 * 1000] = new google.maps.LatLng(  53.089744,   8.810011);
+
+				player1Positions[20.0 * 1000] = new google.maps.LatLng(  53.089977,   8.809746); //WP2
+
+				player1Positions[20.5 * 1000] = new google.maps.LatLng(  53.090206,   8.809430);
+				player1Positions[21.0 * 1000] = new google.maps.LatLng(  53.090504,   8.809104);
+				player1Positions[21.5 * 1000] = new google.maps.LatLng(  53.090694,   8.808931);
+				player1Positions[22.0 * 1000] = new google.maps.LatLng(  53.090871,   8.809308);
+
+				player1Positions[22.5 * 1000] = new google.maps.LatLng(  53.091030,   8.809687); //WP3
+
+				player1Positions[23.0 * 1000] = new google.maps.LatLng(  53.091215,   8.809465);
+				player1Positions[23.5 * 1000] = new google.maps.LatLng(  53.091418,   8.809213);
+				player1Positions[24.0 * 1000] = new google.maps.LatLng(  53.091628,   8.808975);
+				player1Positions[24.5 * 1000] = new google.maps.LatLng(  53.091809,   8.808752);
+				player1Positions[25.0 * 1000] = new google.maps.LatLng(  53.091952,   8.808569);
+
+				player1Positions[25.5 * 1000] = new google.maps.LatLng(  53.092079,   8.808450); //WP4
+
+				player1Positions[26.0 * 1000] = new google.maps.LatLng(  53.092167,   8.808628);
+				player1Positions[26.5 * 1000] = new google.maps.LatLng(  53.092328,   8.809002);
+				player1Positions[27.0 * 1000] = new google.maps.LatLng(  53.092475,   8.808844);
+				player1Positions[27.5 * 1000] = new google.maps.LatLng(  53.092606,   8.808669);
+				player1Positions[28.0 * 1000] = new google.maps.LatLng(  53.092747,   8.808493);
+
+				player1Positions[28.5 * 1000] = new google.maps.LatLng(  53.092908,   8.808303); //WP5
+
+				player1Positions[29.0 * 1000] = new google.maps.LatLng(  53.093015,   8.808180);
+				player1Positions[29.5 * 1000] = new google.maps.LatLng(  53.093124,   8.808055);
+				player1Positions[30.0 * 1000] = new google.maps.LatLng(  53.093216,   8.807949);
+				player1Positions[30.5 * 1000] = new google.maps.LatLng(  53.093348,   8.807810);
+				player1Positions[31.0 * 1000] = new google.maps.LatLng(  53.093473,   8.807664);
+				player1Positions[31.5 * 1000] = new google.maps.LatLng(  53.093573,   8.807560);
+
+				player1Positions[32.0 * 1000] = new google.maps.LatLng(  53.093644,   8.807492); //WP6
+
+				player1Positions[32.5 * 1000] = new google.maps.LatLng(  53.093760,   8.807338);
+				player1Positions[33.0 * 1000] = new google.maps.LatLng(  53.093910,   8.807188);
+				player1Positions[33.5 * 1000] = new google.maps.LatLng(  53.094052,   8.807050); 
+				player1Positions[34.0 * 1000] = new google.maps.LatLng(  53.094189,   8.806969);
+				player1Positions[34.5 * 1000] = new google.maps.LatLng(  53.094255,   8.807182);
+
+				player1Positions[35.0 * 1000] = new google.maps.LatLng(  53.094286,   8.807383); //WP7
+
+				player1Positions[35.5 * 1000] = new google.maps.LatLng(  53.094376,   8.807506);
+				player1Positions[36.0 * 1000] = new google.maps.LatLng(  53.094477,   8.807637);
+
+				player1Positions[36.5 * 1000] = new google.maps.LatLng(  53.094561,   8.807750); //WP8
+
+				player1Positions[37.0 * 1000] = new google.maps.LatLng(  53.094650,   8.807865);
+				player1Positions[37.5 * 1000] = new google.maps.LatLng(  53.094747,   8.808004);
+
+				player1Positions[38.0 * 1000] = new google.maps.LatLng(  53.094853,   8.808150); //WP9 //COLLISION SPIELER 2 DEFEAT
+
+				player1Positions[38.5 * 1000] = new google.maps.LatLng(  53.094933,   8.807986);
+				player1Positions[39.0 * 1000] = new google.maps.LatLng(  53.095024,   8.807805);
+				player1Positions[39.5 * 1000] = new google.maps.LatLng(  53.095107,   8.807631);
+
+				player1Positions[40.0 * 1000] = new google.maps.LatLng(  53.095194,   8.807476); //WP10
+
+				player1Positions[40.5 * 1000] = new google.maps.LatLng(  53.095298,   8.807294);
+				player1Positions[39.4 * 1000] = new google.maps.LatLng(  53.095395,   8.807132); //COLLISION + DEFEAT
+
+
+				/************************
+				*	SPIELER 2	*
+				*			*
+				************************/
+				var player2Positions = new Object();
+				player2Positions[0 * 1000] = new google.maps.LatLng(  53.095531,     8.818193);
+				player2Positions[3 * 1000] = new google.maps.LatLng(  53.095318,     8.817900);
+				player2Positions[7 * 1000] = new google.maps.LatLng(  53.095012,     8.817504);
+
+				player2Positions[14 * 1000] = new google.maps.LatLng(  53.094760,     8.817162); //WP1
+
+				player2Positions[15 * 1000] = new google.maps.LatLng(  53.094614,     8.816875);
+				player2Positions[19 * 1000] = new google.maps.LatLng(  53.094399,     8.816495);
+				player2Positions[19.5 * 1000] = new google.maps.LatLng(  53.094234,    8.816139);
+				player2Positions[20.0 * 1000] = new google.maps.LatLng(  53.094239,    8.815681);
+				player2Positions[20.5 * 1000] = new google.maps.LatLng(  53.094468,    8.815388);
+				player2Positions[21.0 * 1000] = new google.maps.LatLng(  53.094654,    8.815112);
+
+				player2Positions[21.5 * 1000] = new google.maps.LatLng(  53.094775,    8.814955); //WP2
+
+				player2Positions[22.0 * 1000] = new google.maps.LatLng(  53.094905,    8.814784);
+				player2Positions[22.5 * 1000] = new google.maps.LatLng(  53.095128,    8.814510);
+				player2Positions[23.0 * 1000] = new google.maps.LatLng(  53.095412,    8.814151);
+				player2Positions[23.5 * 1000] = new google.maps.LatLng(  53.095696,    8.813789);
+				player2Positions[24.0 * 1000] = new google.maps.LatLng(  53.095908,    8.813546);
+
+				player2Positions[24.5 * 1000] = new google.maps.LatLng(  53.096064,    8.813392); //WP3
+
+				player2Positions[25.0 * 1000] = new google.maps.LatLng(  53.095978,    8.813085);
+				player2Positions[25.5 * 1000] = new google.maps.LatLng(  53.095868,    8.812746);
+				player2Positions[26.0 * 1000] = new google.maps.LatLng(  53.095789,    8.812497);
+
+				player2Positions[26.5 * 1000] = new google.maps.LatLng(  53.095714,    8.812261); //WP4
+
+				player2Positions[27.0 * 1000] = new google.maps.LatLng(  53.095867,    8.812010);
+				player2Positions[27.5 * 1000] = new google.maps.LatLng(  53.096025,    8.811791);
+				player2Positions[28.0 * 1000] = new google.maps.LatLng(  53.096239,    8.811493);
+				player2Positions[28.5 * 1000] = new google.maps.LatLng(  53.096402,    8.811252);
+
+				player2Positions[29.0 * 1000] = new google.maps.LatLng(  53.096534,    8.811074); //WP5
+
+				player2Positions[29.5 * 1000] = new google.maps.LatLng(  53.096372,    8.810844);
+				player2Positions[30.0 * 1000] = new google.maps.LatLng(  53.096133,    8.810503);
+				player2Positions[30.5 * 1000] = new google.maps.LatLng(  53.095966,    8.810254);
+
+				player2Positions[31.0 * 1000] = new google.maps.LatLng(  53.095752,    8.809983); //WP6
+
+				player2Positions[31.5 * 1000] = new google.maps.LatLng(  53.095569,    8.809874);
+				player2Positions[32.0 * 1000] = new google.maps.LatLng(  53.095334,    8.809716);
+				player2Positions[33.5 * 1000] = new google.maps.LatLng(  53.095210,    8.809433);
+				player2Positions[34.0 * 1000] = new google.maps.LatLng(  53.095099,    8.809137);
+				player2Positions[35.5 * 1000] = new google.maps.LatLng(  53.094955,    8.809051);
+				player2Positions[36.0 * 1000] = new google.maps.LatLng(  53.094882,    8.808804);
+
+				player2Positions[37.5 * 1000] = new google.maps.LatLng(  53.094776,    8.808487); //WP7
+
+				player2Positions[38.1 * 1000] = new google.maps.LatLng(  53.094778,    8.808237);
+				player2Positions[38.4 * 1000] = new google.maps.LatLng(  53.094771,    8.808007); //COLLISION + DEFEAT
+
+
+				/************************
+				*	SPIELER 3	*
+				*			*
+				************************/
 				var player3Positions = new Object();
+				player3Positions[0 * 1000] = new google.maps.LatLng(   53.094717,       8.797023);
+				player3Positions[3 * 1000] = new google.maps.LatLng(   53.094687,       8.797604);
+				player3Positions[7 * 1000] = new google.maps.LatLng(   53.094653,       8.798298);
+				player3Positions[14 * 1000] = new google.maps.LatLng(   53.094630,       8.798817);
+				player3Positions[15 * 1000] = new google.maps.LatLng(   53.094596,       8.799319);
+
+				player3Positions[19 * 1000] = new google.maps.LatLng(   53.094617,       8.799633); //WP1
+
+				player3Positions[19.5 * 1000] = new google.maps.LatLng(   53.094603,     8.800047);
+				player3Positions[20.0 * 1000] = new google.maps.LatLng(   53.094566,     8.800481);
+				player3Positions[20.5 * 1000] = new google.maps.LatLng(   53.094536,     8.800908);
+
+				player3Positions[21.0 * 1000] = new google.maps.LatLng(   53.094539,     8.801290); //WP2
+
+				player3Positions[21.5 * 1000] = new google.maps.LatLng(   53.094340,     8.801306);
+				player3Positions[22.0 * 1000] = new google.maps.LatLng(   53.094080,     8.801273);
+				player3Positions[22.5 * 1000] = new google.maps.LatLng(   53.093843,     8.801268);
+				player3Positions[23.0 * 1000] = new google.maps.LatLng(   53.093581,     8.801274);
+				player3Positions[23.5 * 1000] = new google.maps.LatLng(   53.093360,     8.801482);
+				player3Positions[24.0 * 1000] = new google.maps.LatLng(   53.093197,     8.801701);
+
+				player3Positions[24.5 * 1000] = new google.maps.LatLng(   53.092974,     8.802028); //WP3
+
+				player3Positions[25.0 * 1000] = new google.maps.LatLng(   53.092744,     8.802313);
+
+				player3Positions[25.5 * 1000] = new google.maps.LatLng(   53.092490,     8.802655); //WP4
+
+				player3Positions[26.0 * 1000] = new google.maps.LatLng(   53.092559,     8.802930);
+				player3Positions[26.5 * 1000] = new google.maps.LatLng(   53.092378,     8.803169);
+				player3Positions[27.0 * 1000] = new google.maps.LatLng(   53.092232,     8.803320);
+				player3Positions[27.2 * 1000] = new google.maps.LatLng(   53.092059,     8.803473);
+				player3Positions[27.4 * 1000] = new google.maps.LatLng(   53.091915,     8.803618);
+
+				player3Positions[27.8 * 1000] = new google.maps.LatLng(   53.091822,     8.803700); //WP5
+
+				player3Positions[29.0 * 1000] = new google.maps.LatLng(   53.091699,     8.803818);
+				player3Positions[29.5 * 1000] = new google.maps.LatLng(   53.091565,     8.803968);
+				player3Positions[30.0 * 1000] = new google.maps.LatLng(   53.091636,     8.804243);
+				player3Positions[30.5 * 1000] = new google.maps.LatLng(   53.091757,     8.804532);
+				player3Positions[28.0 * 1000] = new google.maps.LatLng(   53.091887,     8.804768);
+				player3Positions[29.0 * 1000] = new google.maps.LatLng(   53.091980,     8.805036);
+				player3Positions[29.2 * 1000] = new google.maps.LatLng(   53.092110,     8.805419);
+				player3Positions[29.5 * 1000] = new google.maps.LatLng(   53.092231,     8.805644);
+				player3Positions[30.0 * 1000] = new google.maps.LatLng(   53.092375,     8.805959);
+				player3Positions[30.5 * 1000] = new google.maps.LatLng(   53.092522,     8.806257);
+
+				player3Positions[31.0 * 1000] = new google.maps.LatLng(   53.092693,     8.806609);
+				player3Positions[31.5 * 1000] = new google.maps.LatLng(   53.092869,     8.807005);
+				player3Positions[32.6 * 1000] = new google.maps.LatLng(   53.093059,     8.807399);
+				player3Positions[32.8 * 1000] = new google.maps.LatLng(   53.093238,     8.807213);
+				player3Positions[33.0 * 1000] = new google.maps.LatLng(   53.093438,     8.806991);
+				player3Positions[33.2 * 1000] = new google.maps.LatLng(   53.093611,     8.806814);
+				player3Positions[33.4 * 1000] = new google.maps.LatLng(   53.093799,     8.806614);
+
+				player3Positions[33.6 * 1000] = new google.maps.LatLng(   53.093977,     8.806468); //WP6
+
+				player3Positions[33.8 * 1000] = new google.maps.LatLng(   53.094083,     8.806459);
+				player3Positions[33.9 * 1000] = new google.maps.LatLng(   53.094142,     8.806758);
+				player3Positions[34.0 * 1000] = new google.maps.LatLng(   53.094288,     8.807012);
+				player3Positions[34.1 * 1000] = new google.maps.LatLng(   53.094422,     8.807181);
+				player3Positions[34.3 * 1000] = new google.maps.LatLng(   53.094460,     8.806760);
+
+				player3Positions[34.5 * 1000] = new google.maps.LatLng(   53.094453,     8.806339); //WP7
+
+				player3Positions[35.0 * 1000] = new google.maps.LatLng(   53.094451,     8.805960);
+				player3Positions[35.2 * 1000] = new google.maps.LatLng(   53.094463,     8.805555);
+				player3Positions[35.5 * 1000] = new google.maps.LatLng(   53.094485,     8.805131);
+				player3Positions[36.0 * 1000] = new google.maps.LatLng(   53.094512,     8.804515);
+				player3Positions[36.5 * 1000] = new google.maps.LatLng(   53.094545,     8.804127);
+				player3Positions[37.0 * 1000] = new google.maps.LatLng(   53.094550,     8.803789);
+
+				player3Positions[37.2 * 1000] = new google.maps.LatLng(   53.094559,     8.803502); //WP8
+
+				player3Positions[37.4 * 1000] = new google.maps.LatLng(   53.094714,     8.803497);
+				player3Positions[37.6 * 1000] = new google.maps.LatLng(   53.094967,     8.803584);
+				player3Positions[37.8 * 1000] = new google.maps.LatLng(   53.095188,     8.803849);
+				player3Positions[38.0 * 1000] = new google.maps.LatLng(   53.095420,     8.804123);
+				player3Positions[38.5 * 1000] = new google.maps.LatLng(   53.095591,     8.804380);
+
+				player3Positions[39.0 * 1000] = new google.maps.LatLng(   53.095733,     8.804501); //WP9
+
+				player3Positions[39.2 * 1000] = new google.maps.LatLng(   53.095872,     8.804159);
+				player3Positions[39.5 * 1000] = new google.maps.LatLng(   53.096012,     8.803891);
+				player3Positions[40.0 * 1000] = new google.maps.LatLng(   53.096195,     8.804107);
+				player3Positions[41.0 * 1000] = new google.maps.LatLng(   53.096367,     8.804349);
+
+				player3Positions[41.5 * 1000] = new google.maps.LatLng(   53.096534,     8.804530); //WP10
+
+				player3Positions[42.0 * 1000] = new google.maps.LatLng(   53.096758,     8.804763);
+				player3Positions[42.5 * 1000] = new google.maps.LatLng(   53.097000,     8.805045);
+
+				player3Positions[43.0 * 1000] = new google.maps.LatLng(   53.097183,     8.805224); //WP11
+
+				player3Positions[43.5 * 1000] = new google.maps.LatLng(   53.097321,     8.804810);
+				player3Positions[44.0 * 1000] = new google.maps.LatLng(   53.097428,     8.804446);
+
+				player3Positions[44.2 * 1000] = new google.maps.LatLng(   53.097547,     8.804098); //WP12
+
+				player3Positions[44.5 * 1000] = new google.maps.LatLng(   53.097670,     8.803686);
+				player3Positions[45.0 * 1000] = new google.maps.LatLng(   53.097804,     8.803311);
+
+				player3Positions[45.2 * 1000] = new google.maps.LatLng(   53.097894,     8.802991); //WP13
+
+				player3Positions[45.5 * 1000] = new google.maps.LatLng(   53.098079,     8.803168);
+				player3Positions[46.0 * 1000] = new google.maps.LatLng(   53.098301,     8.803416);
+				player3Positions[46.5 * 1000] = new google.maps.LatLng(   53.098562,     8.803642);
+
+				player3Positions[47.0 * 1000] = new google.maps.LatLng(   53.098757,     8.803826); //WP 14
+
+				player3Positions[47.5 * 1000] = new google.maps.LatLng(   53.099013,     8.803724);
+
+				player3Positions[48.5 * 1000] = new google.maps.LatLng(   53.099292,     8.803580);
+				player3Positions[49.0 * 1000] = new google.maps.LatLng(   53.099484,     8.803682);
+
+				player3Positions[49.5 * 1000] = new google.maps.LatLng(   53.099633,     8.803877); //WP15
+
+				player3Positions[50.0 * 1000] = new google.maps.LatLng(   53.099675,     8.804120);
+				player3Positions[51.5 * 1000] = new google.maps.LatLng(   53.099731,     8.804410);
+				player3Positions[52.5 * 1000] = new google.maps.LatLng(   53.099879,     8.804551); 
+				player3Positions[53.0 * 1000] = new google.maps.LatLng(   53.100057,     8.804662);
+
+				player3Positions[53.5 * 1000] = new google.maps.LatLng(   53.100210,     8.804834); //WP16
+
+				player3Positions[54.0 * 1000] = new google.maps.LatLng(   53.100340,     8.805465);
+				player3Positions[54.5 * 1000] = new google.maps.LatLng(   53.100214,     8.805884);
+
+				player3Positions[55.5 * 1000] = new google.maps.LatLng(   53.100109,     8.806405); //WP17
+
+				player3Positions[56.0 * 1000] = new google.maps.LatLng(   53.099909,     8.807147); 
+				player3Positions[56.5 * 1000] = new google.maps.LatLng(   53.099745,     8.807514);
+				player3Positions[57.0 * 1000] = new google.maps.LatLng(   53.099604,     8.808039);
+				player3Positions[58.0 * 1000] = new google.maps.LatLng(   53.099538,     8.808274); 
+
+				player3Positions[58.5 * 1000] = new google.maps.LatLng(   53.099402,     8.808720); //WP18
+
+				player3Positions[59.0 * 1000] = new google.maps.LatLng(   53.099190,     8.809313);
+
+				player3Positions[59.5 * 1000] = new google.maps.LatLng(   53.098926,     8.809205); //WP19
+
+				player3Positions[60.0 * 1000] = new google.maps.LatLng(   53.098685,     8.809043);
+
+				player3Positions[61.5 * 1000] = new google.maps.LatLng(   53.098390,     8.808905); //WP20
+				player3Positions[62.0 * 1000] = new google.maps.LatLng(   53.098013,     8.809077); //WP21
+
+				player3Positions[63.5 * 1000] = new google.maps.LatLng(   53.097992,     8.809338);
+
+				player3Positions[64.0 * 1000] = new google.maps.LatLng(   53.098126,     8.809439); //WP22
+
+				player3Positions[64.5 * 1000] = new google.maps.LatLng(   53.098277,     8.809431);
+				player3Positions[65.0 * 1000] = new google.maps.LatLng(   53.098395,     8.809465);
+
+				player3Positions[65.5 * 1000] = new google.maps.LatLng(   53.098477,     8.809507); //WP23
+
+				player3Positions[66.0 * 1000] = new google.maps.LatLng(   53.098570,     8.809329);
+				player3Positions[66.5 * 1000] = new google.maps.LatLng(   53.098718,     8.809191);
+				player3Positions[67.0 * 1000] = new google.maps.LatLng(   53.098885,     8.809137); //COLLISION + DEFEAT
+
+
+				/************************
+				*	SPIELER 4	*
+				*			*
+				************************/
 				var player4Positions = new Object();
+				player4Positions[0 * 1000] = new google.maps.LatLng(  53.100090,    8.805098);
+				player4Positions[3 * 1000] = new google.maps.LatLng(  53.099832,    8.804868);
+				player4Positions[7 * 1000] = new google.maps.LatLng(  53.099535,    8.804615);
+
+				player4Positions[14 * 1000] = new google.maps.LatLng(    53.099322,   8.804435); //WP1
+
+				player4Positions[19.5 * 1000] = new google.maps.LatLng(  53.099147,    8.804212);
+				player4Positions[20.0 * 1000] = new google.maps.LatLng(  53.098946,    8.803987);
+				player4Positions[20.5 * 1000] = new google.maps.LatLng(  53.098745,    8.804029);
+				player4Positions[21.0 * 1000] = new google.maps.LatLng(  53.098646,    8.804315);
+
+				player4Positions[21.5 * 1000] = new google.maps.LatLng(  53.098559,    8.804607); //WP2
+
+				player4Positions[22.0 * 1000] = new google.maps.LatLng(  53.098454,    8.804812);
+				player4Positions[22.5 * 1000] = new google.maps.LatLng(  53.098358,    8.805114);
+				player4Positions[23.0 * 1000] = new google.maps.LatLng(  53.098266,    8.805415);
+				player4Positions[23.5 * 1000] = new google.maps.LatLng(  53.098189,    8.805625);
+
+				player4Positions[24.0 * 1000] = new google.maps.LatLng(  53.098144,    8.805810); //WP3
+
+				player4Positions[24.5 * 1000] = new google.maps.LatLng(  53.098056,    8.806056);
+				player4Positions[25.0 * 1000] = new google.maps.LatLng(  53.097970,    8.806311);
+				player4Positions[25.5 * 1000] = new google.maps.LatLng(  53.097893,    8.806607);
+				player4Positions[26.0 * 1000] = new google.maps.LatLng(  53.097867,    8.806924);
+				player4Positions[26.5 * 1000] = new google.maps.LatLng(  53.097690,    8.807059);
+				player4Positions[27.0 * 1000] = new google.maps.LatLng(  53.097514,    8.807037);
+
+				player4Positions[27.5 * 1000] = new google.maps.LatLng(  53.097351,    8.807011); //WP4
+
+				player4Positions[28.0 * 1000] = new google.maps.LatLng(  53.097205,    8.806971);
+				player4Positions[28.5 * 1000] = new google.maps.LatLng(  53.097009,    8.806919);
+				player4Positions[29.0 * 1000] = new google.maps.LatLng(  53.096757,    8.806807);
+
+				player4Positions[29.5 * 1000] = new google.maps.LatLng(  53.096610,    8.806733); //WP5
+
+				player4Positions[30.0 * 1000] = new google.maps.LatLng(  53.096669,    8.806472);
+				player4Positions[30.5 * 1000] = new google.maps.LatLng(  53.096504,    8.806291);
+				player4Positions[31.0 * 1000] = new google.maps.LatLng(  53.096334,    8.806088);
+				player4Positions[31.5 * 1000] = new google.maps.LatLng(  53.096170,    8.805903);
+
+				player4Positions[32.0 * 1000] = new google.maps.LatLng(  53.096016,    8.805751); //WP6
+
+				player4Positions[32.5 * 1000] = new google.maps.LatLng(  53.095870,    8.805588);
+				player4Positions[33.0 * 1000] = new google.maps.LatLng(  53.095702,    8.805391);
+
+				player4Positions[33.5 * 1000] = new google.maps.LatLng(  53.095499,    8.805171);
+				player4Positions[34.0 * 1000] = new google.maps.LatLng(  53.095368,    8.805422);
+
+				player4Positions[34.5 * 1000] = new google.maps.LatLng(  53.095225,    8.805725); //WP7
+
+				player4Positions[35.0 * 1000] = new google.maps.LatLng(  53.095162,    8.805924);
+				player4Positions[35.5 * 1000] = new google.maps.LatLng(  53.095057,    8.806205);
+				player4Positions[36.0 * 1000] = new google.maps.LatLng(  53.094980,    8.806436); 
+
+				player4Positions[36.5 * 1000] = new google.maps.LatLng(  53.094912,    8.806638); //WP8
+
+				player4Positions[37.0 * 1000] = new google.maps.LatLng(  53.095061,    8.806775);
+
+				player4Positions[37.5 * 1000] = new google.maps.LatLng(  53.095200,    8.806935); //WP9
+
+				player4Positions[38.0 * 1000] = new google.maps.LatLng(  53.095357,    8.807086);
+
+				player4Positions[38.5 * 1000] = new google.maps.LatLng(  53.095568,    8.807319); //WP10 //COLLISION WITH PLAYER 01!
+
+				player4Positions[40.5 * 1000] = new google.maps.LatLng(  53.095624,   8.807538);
+				player4Positions[42.5 * 1000] = new google.maps.LatLng(  53.095644,   8.807782);
+				player4Positions[43.0 * 1000] = new google.maps.LatLng(  53.095684,   8.807967);
+				player4Positions[44.5 * 1000] = new google.maps.LatLng(  53.095670,   8.808235);
+				player4Positions[45.0 * 1000] = new google.maps.LatLng(  53.095716,   8.808479);
+
+				player4Positions[46.5 * 1000] = new google.maps.LatLng(  53.095782,   8.808741); //WP11
+
+				player4Positions[47.0 * 1000] = new google.maps.LatLng(  53.095929,   8.808731);
+				player4Positions[48.5 * 1000] = new google.maps.LatLng(  53.096045,   8.808714);
+
+				player4Positions[49.0 * 1000] = new google.maps.LatLng(  53.096169,   8.808689); //WP12
+
+				player4Positions[50.5 * 1000] = new google.maps.LatLng(  53.096271,   8.808648);
+
+				player4Positions[51.0 * 1000] = new google.maps.LatLng(  53.096375,   8.808554); //WP13
+
+				player4Positions[52.5 * 1000] = new google.maps.LatLng(  53.096444,   8.808642);
+				player4Positions[53.0 * 1000] = new google.maps.LatLng(  53.096523,   8.808699);
+				player4Positions[53.5 * 1000] = new google.maps.LatLng(  53.096607,   8.808685);
+				player4Positions[54.0 * 1000] = new google.maps.LatLng(  53.096680,   8.808672);
+				player4Positions[54.5 * 1000] = new google.maps.LatLng(  53.096761,   8.808673);
+				player4Positions[55.0 * 1000] = new google.maps.LatLng(  53.096843,   8.808668);
+
+				player4Positions[55.5 * 1000] = new google.maps.LatLng(  53.096924,   8.808665); //WP14
+
+				player4Positions[56.0 * 1000] = new google.maps.LatLng(  53.097082,   8.808678);
+				player4Positions[56.5 * 1000] = new google.maps.LatLng(  53.097240,   8.808692);
+				player4Positions[57.0 * 1000] = new google.maps.LatLng(  53.097405,   8.808772);
+
+				player4Positions[58.5 * 1000] = new google.maps.LatLng(  53.097614,   8.808802); //WP15
+
+				player4Positions[59.0 * 1000] = new google.maps.LatLng(  53.097733,   8.808939);
+				player4Positions[60.5 * 1000] = new google.maps.LatLng(  53.097708,   8.809244);
+
+				player4Positions[62.0 * 1000] = new google.maps.LatLng(  53.097663,   8.809479); //WP16
+
+				player4Positions[63.5 * 1000] = new google.maps.LatLng(  53.097638,   8.809781);
+				player4Positions[64.0 * 1000] = new google.maps.LatLng(  53.097789,   8.809822);
+
+				player4Positions[64.5 * 1000] = new google.maps.LatLng(  53.097935,   8.809845); //WP17
+
+				player4Positions[65.0 * 1000] = new google.maps.LatLng(  53.098130,   8.809870);
+
+				player4Positions[65.5 * 1000] = new google.maps.LatLng(  53.098301,   8.809895); //WP18
+
+				player4Positions[66.0 * 1000] = new google.maps.LatLng(  53.098472,   8.809879);
+
+				player4Positions[66.5 * 1000] = new google.maps.LatLng(  53.098623,   8.809432); //WP19
+				player4Positions[67.0 * 1000] = new google.maps.LatLng(  53.098902,   8.809358); //WP20
+
+				player4Positions[67.5 * 1000] = new google.maps.LatLng(  53.099142,   8.809131); //VICTORY!
 
 				this._playerPositions = new Array
 				(
@@ -60,13 +441,74 @@
 				);
 
 				var player1Nodes = new Object();
-				player1Nodes[2 * 1000] = true;
-				player1Nodes[6 * 1000] = true;
-				player1Nodes[10 * 1000] = true;
+				player1Nodes[15 * 1000] = true;
+				player1Nodes[20.0 * 1000] = true;
+				player1Nodes[22.5 * 1000] = true;
+				player1Nodes[25.5 * 1000] = true;
+				player1Nodes[28.5 * 1000] = true;
+				player1Nodes[32.0 * 1000] = true;
+				player1Nodes[35.0 * 1000] = true;
+				player1Nodes[38.5 * 1000] = true;
+				player1Nodes[40.0 * 1000] = true;
 
 				var player2Nodes = new Object();
+				player2Nodes[14 * 1000] = true;
+				player2Nodes[21.5 * 1000] = true;
+				player2Nodes[24.5 * 1000] = true;
+				player2Nodes[26.5 * 1000] = true;
+				player2Nodes[29.0 * 1000] = true;
+				player2Nodes[31.0 * 1000] = true;
+				player2Nodes[37.5 * 1000] = true;
+
+
 				var player3Nodes = new Object();
+				player3Nodes[19 * 1000] = true;
+				player3Nodes[21.0 * 1000] = true;
+				player3Nodes[24.5 * 1000] = true;
+				player3Nodes[25.5 * 1000] = true;
+				player3Nodes[27.8 * 1000] = true;
+				player3Nodes[33.6 * 1000] = true;
+				player3Nodes[34.5 * 1000] = true;
+				player3Nodes[37.2 * 1000] = true;
+				player3Nodes[39.0 * 1000] = true;
+				player3Nodes[41.5 * 1000] = true;
+				player3Nodes[43.0 * 1000] = true;
+				player3Nodes[44.2 * 1000] = true;
+				player3Nodes[45.2 * 1000] = true;
+				player3Nodes[47.0 * 1000] = true;
+				player3Nodes[49.5 * 1000] = true;
+				player3Nodes[53.5 * 1000] = true;
+				player3Nodes[55.5 * 1000] = true;
+				player3Nodes[58.5 * 1000] = true;
+				player3Nodes[59.5 * 1000] = true;
+				player3Nodes[61.5 * 1000] = true;
+				player3Nodes[62.0 * 1000] = true;
+				player3Nodes[64.0 * 1000] = true;
+				player3Nodes[65.5 * 1000] = true;
+
+
 				var player4Nodes = new Object();
+				player4Nodes[14.0 * 1000] = true;
+				player4Nodes[21.5 * 1000] = true;
+				player4Nodes[24.0 * 1000] = true;
+				player4Nodes[27.5 * 1000] = true;
+				player4Nodes[29.5 * 1000] = true;
+				player4Nodes[32.0 * 1000] = true;
+				player4Nodes[34.5 * 1000] = true;
+				player4Nodes[36.5 * 1000] = true;
+				player4Nodes[37.5 * 1000] = true;
+				player4Nodes[38.5 * 1000] = true;
+				player4Nodes[46.5 * 1000] = true;
+				player4Nodes[49.0 * 1000] = true;
+				player4Nodes[51.0 * 1000] = true;
+				player4Nodes[55.5 * 1000] = true;
+				player4Nodes[58.5 * 1000] = true;
+				player4Nodes[62.0 * 1000] = true;
+				player4Nodes[64.5 * 1000] = true;
+				player4Nodes[65.5 * 1000] = true;
+				player4Nodes[66.5 * 1000] = true;
+				player4Nodes[67.0 * 1000] = true;
+
 
 				this._playerNodes = new Array
 				(
