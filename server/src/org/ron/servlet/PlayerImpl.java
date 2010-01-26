@@ -113,6 +113,18 @@ implements Player
 		}
 	}
 	
+	public Segment[] getSegments()
+	{
+		try
+		{
+			return _database.getNodes().getSegments().toArray(this);
+		}
+		catch(SQLException exception)
+		{
+			throw wrapInRuntimeException(exception);
+		}
+	}
+	
 	public Segment[] getSegments(Calendar time)
 	{
 		try

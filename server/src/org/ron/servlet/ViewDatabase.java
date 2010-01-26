@@ -19,6 +19,8 @@ extends AbstractDatabase<ViewSegment>
 	private static final String SQLTABLENAME = "SEGMENTVIEW";
 	private static final String SQLORDER = "PLAYERID ASC, SEGMENTID ASC, START_LAT ASC, START_LNG ASC";
 	
+	private static final float RADIUS = 50;
+	
 	private final SegmentDatabase _segments;
 	
 	public ViewDatabase(SegmentDatabase segments)
@@ -26,7 +28,12 @@ extends AbstractDatabase<ViewSegment>
 	{
 		super(segments.getConnection());
 		_segments = segments;
-	}	
+	}
+	
+	private float calculateSightRadius(Vector2f posVector, float meters)
+	{
+		return 1f / 111.3f / 1000f * meters; 
+	}
 
 	public void getUpdate(ClientWriter writer, Player player, Segment[] segments)
 	throws SQLException, PositionCollision
@@ -35,16 +42,19 @@ extends AbstractDatabase<ViewSegment>
 		Vector2f[] buffer = new Vector2f[2];
 		boolean succeeded;
 		
+		Vector2f posVector = new Vector2f(player.getLatitude(), player.getLongitude());
+		float radius = calculateSightRadius(posVector, RADIUS);
+		
 		for(Segment segment : segments)
 		{
 			if(contains(player, segment))
 				continue; //already at device
 			
 			//we actually have to test now
-			succeeded = Collision.GetIntersections(player.getLatitude(), player.getLongitude(), segment.getStart().toVector(), segment.getEnd().toVector(), collidingVectors);
+			succeeded = Collision.GetIntersections(posVector, radius, segment.getStart().toVector(), segment.getEnd().toVector(), collidingVectors);
 			
 			if(!succeeded)
-				continue; //no intersection
+				continue; //no intersection or player already knows
 			
 			buffer[0] = segment.getStart().toVector();
 			buffer[1] = segment.getEnd().toVector();

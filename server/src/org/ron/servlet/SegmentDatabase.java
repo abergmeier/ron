@@ -225,10 +225,23 @@ extends AbstractDatabase<Segment>
 	
 	private static final int PS_GETPLAYER = getUniqueRandom();
 	
-	public Segment[] toArray(Player player, Calendar time)
+	public Segment[] toArray(Player player)
+	throws SQLException
+	{
+		//make sure we get all updates
+		return toArray(player, 0);
+	}
+	
+	protected Segment[] toArray(Player player, Calendar time)
+	throws SQLException
+	{
+		return toArray(player, time.get(Calendar.SECOND));
+	}
+	
+	protected Segment[] toArray(Player player, int seconds)
 	throws SQLException
 	{	
-		Savepoint save = getConnection().setSavepoint();
+		Savepoint save = setSavepoint();
 		
 		try
 		{
@@ -248,7 +261,7 @@ extends AbstractDatabase<Segment>
 			synchronized(statement)
 			{
 				statement.setInt(1, player.getId());
-				statement.setInt(2, time.get(Calendar.SECOND));
+				statement.setInt(2, seconds);
 				
 				ResultSet result = statement.executeQuery();
 				

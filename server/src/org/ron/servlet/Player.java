@@ -1,7 +1,5 @@
 package org.ron.servlet;
 
-import java.util.Calendar;
-
 import org.ron.PositionCollision;
 
 public interface Player
@@ -19,8 +17,17 @@ extends Position, IntegerIdObject
 
 	public float getLongitude();
 	
-	public Segment[] getSegments(Calendar time);
+	public Segment[] getSegments();
 	
+	public void testCollision(Segment[] segments)
+	throws PositionCollision;
+	
+	/**
+	 * Test for collisions and writes updated info to clients
+	 * @param writer
+	 * @param segments
+	 * @throws PositionCollision
+	 */
 	public void getUpdate(ClientWriter writer, Segment[] segments)
 	throws PositionCollision;
 }
