@@ -7,7 +7,6 @@ import javax.vecmath.Vector2f;
 
 public class Collision
 {
-	private static final float RADIUS = 20;
 	private static Vector2f[] buffers = new Vector2f[]{new Vector2f(), new Vector2f()};
 	private static Result _results = new Result();
 	

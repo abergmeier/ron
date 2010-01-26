@@ -79,8 +79,6 @@ extends AbstractDatabase<Segment>
 		);
 	}
 	
-	private static final int PS_GETLAST = getUniqueRandom();
-	
 	protected Segment get(int segmentId)
 	throws SQLException
 	{
