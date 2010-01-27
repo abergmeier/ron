@@ -518,6 +518,11 @@
 					player4Nodes
 				);
 			};
+
+			Simulation.prototype.getPlayerName = function()
+			{
+				return "Bot";
+			};
 			
 			Simulation.prototype.clearWatch = function()
 			{
@@ -527,12 +532,12 @@
 				}
 				
 				this.watches.splice(0, watches.length);
-			}
+			};
 
 			Simulation.prototype.getCurrentPosition = function(functionName)
 			{
 				functionName(getPosition(_lastServerPosition[0], _lastServerPosition[1]));
-			}
+			};
 
 			Simulation.prototype.onClick = function()
 			{
@@ -982,17 +987,18 @@
 					document.getElementsByTagName("head")[0].appendChild(script);
 					_location = google.gears.factory.create('beta.geolocation');
 				}
+
+				if(!_location.getPlayerName)
+					_location.getPlayerName = function()
+					{
+						return prompt("Please enter your player's name", "");
+					};
 				
 				_location.getCurrentPosition
 				(
 					function(position)
 					{
-						var playerName;
-						
-						if(_simulation)
-							playerName = "Bot";
-						else
-							playerName = prompt("Please enter your player's name", "");
+						var playerName = _location.getPlayerName();
 						
 						if(playerName == null)
 							return;
