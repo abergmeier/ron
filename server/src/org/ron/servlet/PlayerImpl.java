@@ -3,6 +3,9 @@ package org.ron.servlet;
 import java.sql.SQLException;
 import java.util.Calendar;
 
+import javax.vecmath.Vector2f;
+
+import org.ron.Collision;
 import org.ron.PositionCollision;
 
 
