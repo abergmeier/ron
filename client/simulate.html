@@ -539,7 +539,7 @@
 				functionName(getPosition(_lastServerPosition[0], _lastServerPosition[1]));
 			};
 
-			Simulation.prototype.onClick = function()
+			Simulation.prototype.registerClicks = function()
 			{
 				var nodes = this._playerNodes[getPlayer().getId() - 1];
 				var node;
@@ -1040,15 +1040,12 @@
 
 						setUpdate(true);
 
-						//user interaction not allowed for simulation
-						if(_simulation)
-							_simulation.onClick();
-						else
-						{
-							//not working for some awkward reason
-							//google.maps.event.addListener(_map, 'click', submitPoint);
-							document.onclick = submitPoint;
-						}
+						if(_location.registerClicks)
+							_location.registerClicks();
+
+						//not working for some awkward reason
+						//google.maps.event.addListener(_map, 'click', submitPoint);
+						document.onclick = submitPoint;
 					}
 				);  
 			}
