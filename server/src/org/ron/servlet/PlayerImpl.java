@@ -148,6 +148,9 @@ implements Player
 		
 		for(Segment segment : segments)
 		{
+			if(segment == null)
+				continue;
+			
 			Collision.testCollision(posVector, segment.getStart().toVector(), segment.getEnd().toVector());
 		}
 	}

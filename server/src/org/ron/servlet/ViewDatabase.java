@@ -47,6 +47,9 @@ extends AbstractDatabase<ViewSegment>
 		
 		for(Segment segment : segments)
 		{
+			if(segment == null)
+				continue;
+			
 			if(contains(player, segment))
 				continue; //already at device
 			

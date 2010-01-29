@@ -203,7 +203,7 @@ extends XmlRpcServlet
 				segments = otherPlayer.getSegments();
 				
 				if(otherPlayer.equals(player))
-				{
+				{			
 					//for the player we only need to do collision detection
 					player.testCollision(segments);
 					continue; //we already have all data of current player on device
@@ -216,6 +216,9 @@ extends XmlRpcServlet
 				
 				for(Segment segment : segments)
 				{
+					if(segment == null)
+						continue;
+					
 					if(newUpdateTime.after(segment.getTime()))
 						continue; //update is already "older"
 					
