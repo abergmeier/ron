@@ -536,10 +536,10 @@
 			{
 				for(var i in this.watches)
 				{
-					self.clearTimeout(watches[i]);
+					self.clearTimeout(this.watches[i]);
 				}
 				
-				this.watches.splice(0, watches.length);
+				this.watches.splice(0, this.watches.length);
 			};
 
 			Simulation.prototype.getCurrentPosition = function(functionName)
