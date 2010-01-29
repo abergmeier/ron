@@ -265,10 +265,12 @@ extends AbstractDatabase<Segment>
 				
 				try
 				{
-					result.next();
-					for(int i = 0; result.next(); i++)
+					int i = 0;
+					
+					while(result.next())
 					{
 						segments[i] = get(result);
+						i++;
 					}
 				}
 				finally
