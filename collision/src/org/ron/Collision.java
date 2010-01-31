@@ -149,37 +149,43 @@ public class Collision
 			
 			float segmentLength;
 			
-			{ //narrow distance processing
-				//use non used vector so we don't have to allocate
-				Vector2f distance = buffers[0];
-	
-				distance.set(P);
-				distance.sub(C);
+			{
+				float pDistance;
 			
-				if(distance.length() == 0f)
+				{ //narrow distance processing
+					//use non used vector so we don't have to allocate
+					Vector2f distanceVector = buffers[0];
+		
+					distanceVector.set(P);
+					distanceVector.sub(C);
+					
+					pDistance = distanceVector.length();
+				}
+			
+				if(pDistance == 0f)
 					throw new PositionCollision();
 				
 				//we're done here with collision processing
 				//only go on when a radius needs to be processed
 				if(r == 0f)
 					return false; //we're done (did collision testing only)
-				else if(r < 0f)
-					r = Math.abs(r); //negative is the same as positive radius
 				
-				if(distance.length() > r)
+				//make sure radius is positive
+				r = Math.abs(r);
+				
+				if(pDistance > r)
 					return false; //not in circle
-				else if(distance.length() == r)
+				else if(pDistance == r)
 				{
 					//right on circle
 					colResult[0].set(P);
-					colResult[0].add(C);
 					colResult[1].set(colResult[0]);					
 					return true;
 				}
 			
 				//we have to calculate the 2 points within
 				//the circle
-				segmentLength = (float)Math.sqrt(Math.pow(r, 2) - distance.lengthSquared());
+				segmentLength = (float)Math.sqrt(Math.pow(r, 2) - pDistance * pDistance);
 			}
 			
 			//let the result class calculate which of
