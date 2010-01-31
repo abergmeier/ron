@@ -1,6 +1,8 @@
 package org.ron;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import javax.vecmath.Vector2f;
@@ -15,6 +17,8 @@ public class Collision
 		private static final int _capacity = 4;
 		private List<Vector2f> _vectors = new ArrayList<Vector2f>(_capacity);
 		private Vector2f _mid;
+		private boolean _isSorted = false;
+		private int _i = 0;
 		
 		public Result()
 		{
@@ -27,6 +31,7 @@ public class Collision
 		public void init(Vector2f mid, Vector2f A, Vector2f B)
 		{
 			_mid = mid;
+			_i = 0;
 			
 			Vector2f vector = _vectors.get(0);
 			vector.set(A);
@@ -40,48 +45,55 @@ public class Collision
 			add(B);
 		}
 		
-		private int compare(Vector2f vector1, Vector2f vector2)
-		{
-			return (int)(vector1.length() - vector2.length());
-		}
-		
 		public void add(Vector2f entry)
 		{
-			entry.sub(_mid);
-
-			try
-			{
-				for(int i = 0; i != _vectors.size(); i++)
+			_isSorted = false;
+			_vectors.get(_i).set(entry);
+			_vectors.get(_i).sub(_mid);
+			_i++;
+		}
+		
+		private void sort()
+		{
+			if(_isSorted)
+				return;
+			
+			Collections.sort
+			(
+				_vectors,
+				new Comparator<Vector2f>()
 				{
-					if(compare(_vectors.get(i), entry) > 0)
+					@Override
+					public int compare(Vector2f vector1, Vector2f vector2)
 					{
-						//copy all one backward
-						for(int j = _vectors.size() - 2; j >= i; j--)
-						{
-							_vectors.get(j + 1).set(_vectors.get(j));
-							
-						}
+						float delta = vector1.length() - vector2.length();
 						
-						_vectors.get(i).set(entry); //add a new element
-						return;
-					}					
+						if(delta < 0f)
+							return -1;
+						else if(delta > 0f)
+							return 1;
+						else
+							return 0;
+					}
+					
 				}
-			}
-			finally
-			{
-				//make sure we have the initial state
-				entry.add(_mid);
-			}
+			);
+			
+			_isSorted = true;
 		}
 		
 		public void getFirst(Vector2f vector)
 		{
+			sort();
+				
 			vector.set(_vectors.get(0));
 			vector.add(_mid);
 		}
 		
 		public void getSecond(Vector2f vector)
 		{
+			sort();
+			
 			vector.set(_vectors.get(1));
 			vector.add(_mid);
 		}
@@ -96,7 +108,7 @@ public class Collision
 		synchronized(buffers)
 		{
 	
-			Vector2f P;
+			final Vector2f P;
 			
 			{
 				Vector2f AC = buffers[0];
@@ -149,7 +161,7 @@ public class Collision
 				
 				//we're done here with collision processing
 				//only go on when a radius needs to be processed
-				if(r == 0)
+				if(r == 0f)
 					return false; //we're done (did collision testing only)
 				else if(r < 0f)
 					r = Math.abs(r); //negative is the same as positive radius
@@ -159,8 +171,9 @@ public class Collision
 				else if(distance.length() == r)
 				{
 					//right on circle
-					colResult[0].set(P); 
-					colResult[1].set(P);
+					colResult[0].set(P);
+					colResult[0].add(C);
+					colResult[1].set(colResult[0]);					
 					return true;
 				}
 			
