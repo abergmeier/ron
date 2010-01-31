@@ -21,6 +21,8 @@ extends AbstractDatabase<ViewSegment>
 	
 	private static final float RADIUS = 200;
 	
+	private static final float SIGHT_RADIUS = 1f / 111.3f / 1000f * RADIUS;
+	
 	private final SegmentDatabase _segments;
 	
 	public ViewDatabase(SegmentDatabase segments)
@@ -32,7 +34,7 @@ extends AbstractDatabase<ViewSegment>
 	
 	private float calculateSightRadius(Vector2f posVector, float meters)
 	{
-		return 1f / 111.3f / 1000f * meters; 
+		return SIGHT_RADIUS; 
 	}
 
 	public void getUpdate(ClientWriter writer, Player player, Collection<Segment> segments)
