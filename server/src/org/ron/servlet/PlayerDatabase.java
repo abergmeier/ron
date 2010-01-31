@@ -439,11 +439,10 @@ implements Set<Player>
 	@Override
 	public boolean remove(Object object)
 	{
-		Connection connection = getConnection();
 		Savepoint save;
 		try
 		{
-			save = connection.setSavepoint();
+			save = setSavepoint();
 		}
 		catch (SQLException e1)
 		{
@@ -509,27 +508,17 @@ implements Set<Player>
 		}
 		catch(SQLException exception)
 		{
-			try
-			{
-				getConnection().rollback(save);
-			}
-			catch (SQLException e)
-			{
-				e.printStackTrace();
-			}
-			
+			rollback(save);			
 			throw wrapInRuntimeException(exception);
+		}
+		catch(RuntimeException exception)
+		{
+			rollback(save);
+			throw exception;
 		}
 		finally
 		{
-			try
-			{
-				getConnection().releaseSavepoint(save);
-			}
-			catch (SQLException e)
-			{
-				e.printStackTrace();
-			}
+			releaseSavepoint(save);
 		}
 	}
 	
