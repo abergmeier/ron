@@ -471,7 +471,11 @@ implements Set<Player>
 			{
 				while(result.next())
 				{
-					allLost = allLost && hasLost(result);
+					if(hasLost(result))
+						continue;
+						
+					allLost = false;
+					break;
 				}
 			}
 			catch(SQLException exception)
