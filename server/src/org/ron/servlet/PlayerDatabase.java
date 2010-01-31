@@ -85,7 +85,11 @@ implements Set<Player>
 		(
 				"CREATE TABLE IF NOT EXISTS " + SQLTABLENAME + " " + 
 				"(" +
+//TODO: Reenable autoincrement after presentation
+/*
     				"ID INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL," +
+*/
+    				"ID INTEGER PRIMARY KEY NOT NULL," +
     				"LAT REAL NULL," +
     				"LNG REAL NULL," +
     				"NAME TEXT NOT NULL," +
