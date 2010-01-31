@@ -144,14 +144,14 @@ public class Collision
 				distance.set(P);
 				distance.sub(C);
 			
-				if(distance.length() == 0)
+				if(distance.length() == 0f)
 					throw new PositionCollision();
 				
 				//we're done here with collision processing
 				//only go on when a radius needs to be processed
 				if(r == 0)
 					return false; //we're done (did collision testing only)
-				else if(r < 0)
+				else if(r < 0f)
 					r = Math.abs(r); //negative is the same as positive radius
 				
 				if(distance.length() > r)
