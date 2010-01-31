@@ -476,7 +476,7 @@ extends AbstractDatabase<Segment>
 		Savepoint save;
 		try
 		{
-			save = getConnection().setSavepoint();
+			save = setSavepoint();
 		}
 		catch(SQLException exception)
 		{
