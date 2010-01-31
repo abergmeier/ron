@@ -694,7 +694,7 @@
 			Line.prototype.isPartial = function()
 			{
 				return this.PolyLine == null;
-			}
+			};
 
 			function Player(player_name, player_id)
 			{
@@ -876,17 +876,7 @@
 						player.addPartialLine(segmentData[1], segmentData[2], segmentData[3], segmentData[4], segmentData[5]);
 					
 				}
-			}
-
-			function addLine(player, elementId, startLat, startLng, endLat, endLng)
-			{
-				player.addLine(segmentId, startLat, startLng, endLat, endLng);
-			}
-
-			function addPartialLine(player, elementId, startLat, startLng, endLat, endLng)
-			{
-				player.addPartialLine(segmentId, startLat, startLng, endLat, endLng);	
-			}				
+			}			
 		
 			function getPoints()
 			{
