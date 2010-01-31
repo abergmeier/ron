@@ -5,6 +5,7 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.io.IOException;
@@ -193,7 +194,7 @@ extends XmlRpcServlet
 		
 		Calendar newUpdateTime = updateCalendar;
 		
-		Segment[] segments;
+		Collection<Segment> segments;
 		try
 		{
 			Boolean allLost = null;
@@ -203,7 +204,7 @@ extends XmlRpcServlet
 				segments = otherPlayer.getSegments();
 				
 				if(otherPlayer.equals(player))
-				{			
+				{
 					//for the player we only need to do collision detection
 					player.testCollision(segments);
 					continue; //we already have all data of current player on device

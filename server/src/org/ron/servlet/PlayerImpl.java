@@ -2,6 +2,7 @@ package org.ron.servlet;
 
 import java.sql.SQLException;
 import java.util.Calendar;
+import java.util.Collection;
 
 import javax.vecmath.Vector2f;
 
@@ -144,19 +145,12 @@ implements Player
 			throw wrapInRuntimeException(exception);
 		}
 	}
-	{
-		try
-		{
-		}
-		{
-		}
-	}
 	
-	public Segment[] getSegments()
+	public Collection<Segment> getSegments()
 	{
 		try
 		{
-			return _database.getNodes().getSegments().toArray(this);
+			return _database.getNodes().getSegments().getAll(this);
 		}
 		catch(SQLException exception)
 		{
@@ -164,11 +158,11 @@ implements Player
 		}
 	}
 	
-	public Segment[] getSegments(Calendar time)
+	public Collection<Segment> getSegments(Calendar time)
 	{
 		try
 		{
-			return _database.getNodes().getSegments().toArray(this, time);
+			return _database.getNodes().getSegments().getAll(this, time);
 		}
 		catch(SQLException exception)
 		{
@@ -176,22 +170,36 @@ implements Player
 		}
 	}
 	
-	public void testCollision(Segment[] segments)
+	public void testCollision(Collection<Segment> segments)
 	throws PositionCollision
 	{
 		Position position = getPosition();
+		
+		Segment lastSegment;
+		try
+		{
+			lastSegment = _database.getNodes().getSegments().getLastInserted();
+		}
+		catch (SQLException exception)
+		{
+			throw wrapInRuntimeException(exception);
+		}
+		
+		if(lastSegment != null)
+		{
+			if(position.equals(lastSegment.getEnd()))
+				return; //player hasn't moved since setting last node
+		}
+		
 		Vector2f posVector = new Vector2f(position.getLatitude(), position.getLongitude());
 		
 		for(Segment segment : segments)
 		{
-			if(segment == null)
-				continue;
-			
 			Collision.testCollision(posVector, segment.getStart().toVector(), segment.getEnd().toVector());
 		}
 	}
 	
-	public void getUpdate(ClientWriter writer, Segment[] segments)
+	public void getUpdate(ClientWriter writer, Collection<Segment> segments)
 	throws PositionCollision
 	{
 		try

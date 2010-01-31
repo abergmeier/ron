@@ -223,67 +223,62 @@ extends AbstractDatabase<Segment>
 	
 	private static final int PS_GETPLAYER = getUniqueRandom();
 	
-	public Segment[] toArray(Player player)
+	public Collection<Segment> getAll(Player player)
 	throws SQLException
 	{
 		//make sure we get all updates
-		return toArray(player, 0);
+		return getAll(player, 0);
 	}
 	
-	protected Segment[] toArray(Player player, Calendar time)
+	protected Collection<Segment> getAll(Player player, Calendar time)
 	throws SQLException
 	{
-		return toArray(player, time.get(Calendar.SECOND));
+		return getAll(player, time.get(Calendar.SECOND));
 	}
 	
-	protected Segment[] toArray(Player player, int seconds)
+	protected Collection<Segment> getAll(Player player, int seconds)
 	throws SQLException
 	{	
-		Savepoint save = setSavepoint();
-		
-		try
+		PreparedStatement statement = getPreparedStatement
+		(
+			PS_GETPLAYER,
+			"SELECT " + SQLFIELDS + " " +
+			"FROM " + SQLTABLENAME + " " +
+			"WHERE ENDNODE IN (SELECT " + NodeDatabase.SQLTABLENAME + "." + NodeDatabase.SQLIDCOLUMN + " FROM " + NodeDatabase.SQLTABLENAME + " WHERE PLAYERID = ?) AND TIME >= ? " + 
+			"ORDER BY " + SQLORDER
+		);
+			
+		synchronized(statement)
 		{
-			int size = size(player);
+			statement.setInt(1, player.getId());
+			statement.setInt(2, seconds);
 			
-			Segment[] segments = new Segment[size];
+			ArrayList<Segment> segments = new ArrayList<Segment>(size(player));
 			
-			PreparedStatement statement = getPreparedStatement
-			(
-				PS_GETPLAYER,
-				"SELECT " + SQLFIELDS + " " +
-				"FROM " + SQLTABLENAME + " " +
-				"WHERE ENDNODE IN (SELECT " + NodeDatabase.SQLTABLENAME + "." + NodeDatabase.SQLIDCOLUMN + " FROM " + NodeDatabase.SQLTABLENAME + " WHERE PLAYERID = ?) AND TIME >= ? " + 
-				"ORDER BY " + SQLORDER
-			);
+			Savepoint save = setSavepoint();
 			
-			synchronized(statement)
-			{
-				statement.setInt(1, player.getId());
-				statement.setInt(2, seconds);
-				
+			try
+			{				
 				ResultSet result = statement.executeQuery();
-				
+			
 				try
-				{
-					int i = 0;
-					
+				{				
 					while(result.next())
 					{
-						segments[i] = get(result);
-						i++;
+						segments.add(get(result));
 					}
 				}
 				finally
 				{
 					result.close();
 				}
+				
+				return segments;
 			}
-			
-			return segments;
-		}
-		finally
-		{
-			releaseSavepoint(save);
+			finally
+			{
+				releaseSavepoint(save);
+			}
 		}
 	}
 

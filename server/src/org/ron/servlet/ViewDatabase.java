@@ -35,7 +35,7 @@ extends AbstractDatabase<ViewSegment>
 		return 1f / 111.3f / 1000f * meters; 
 	}
 
-	public void getUpdate(ClientWriter writer, Player player, Segment[] segments)
+	public void getUpdate(ClientWriter writer, Player player, Collection<Segment> segments)
 	throws SQLException, PositionCollision
 	{	
 		Vector2f[] collidingVectors = new Vector2f[]{new Vector2f(), new Vector2f()}; 
@@ -47,9 +47,6 @@ extends AbstractDatabase<ViewSegment>
 		
 		for(Segment segment : segments)
 		{
-			if(segment == null)
-				continue;
-			
 			if(contains(player, segment))
 				continue; //already at device
 			

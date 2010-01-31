@@ -1,5 +1,7 @@
 package org.ron.servlet;
 
+import java.util.Collection;
+
 import org.ron.PositionCollision;
 
 public interface Player
@@ -13,9 +15,9 @@ extends IntegerIdObject
 	
 	public boolean hasLost();
 	
-	public Segment[] getSegments();
+	public Collection<Segment> getSegments();
 	
-	public void testCollision(Segment[] segments)
+	public void testCollision(Collection<Segment> segments)
 	throws PositionCollision;
 	
 	/**
@@ -24,6 +26,6 @@ extends IntegerIdObject
 	 * @param segments
 	 * @throws PositionCollision
 	 */
-	public void getUpdate(ClientWriter writer, Segment[] segments)
+	public void getUpdate(ClientWriter writer, Collection<Segment> segments)
 	throws PositionCollision;
 }
