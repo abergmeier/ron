@@ -178,7 +178,7 @@ implements Player
 		Segment lastSegment;
 		try
 		{
-			lastSegment = _database.getNodes().getSegments().getLastInserted();
+			lastSegment = _database.getNodes().getSegments().getLastInserted(this);
 		}
 		catch (SQLException exception)
 		{

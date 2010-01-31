@@ -144,25 +144,41 @@ implements Set<Node>
 					if(!result.next())
 						throw new SQLException("INSERT FAILED!?");
 					
-					//we have the current inserted
-					Node endNode = get(result);
+					Node endNode;
+					
+					try
+					{
+						//we have the current inserted
+						endNode = get(result);
+					}
+					catch(NullPointerException exception)
+					{
+						throw new SQLException("INSERT FAILED!?");
+					}
+					
+					if
+					(
+						(endNode.getLatitude() == 0f && endNode.getLongitude() == 0f)
+						|| (endNode.getLatitude() == Float.NaN && endNode.getLongitude() == Float.NaN)
+					)
+						throw new SQLException("SERIOUS FUCKUP!");
 						
 					if(!result.next())
 						return null; //we're done
 					
-					Node startNode = get(result);
-					
 					try
-					{	
-						lat = getLatitude(result);
+					{
+						Node startNode = get(result);
+						
+						//there's more than one node so create segment
+						return _segments.add(startNode, endNode);
 					}
 					catch(NullPointerException exception)
 					{
-						return null; //no row returned - done
+						//we're done
+						//seems like it found just one entry
+						return null;
 					}
-				
-					//there's more than one node so create segments
-					return _segments.add(startNode, endNode);
 				}
 				finally
 				{

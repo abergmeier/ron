@@ -300,6 +300,59 @@ extends AbstractDatabase<Segment>
 			}
 		}
 	}
+	
+	private static final int PS_GETLAST = getUniqueRandom();
+	
+	public Segment getLastInserted(Player player)
+	throws SQLException
+	{
+		PreparedStatement statement = getPreparedStatement
+		(
+			PS_GETLAST,
+			"SELECT " + SQLFIELDS + " " +
+			"FROM " + SQLTABLENAME + " " +
+			"WHERE ENDNODE IN (SELECT " + NodeDatabase.SQLTABLENAME + "." + NodeDatabase.SQLIDCOLUMN + " FROM " + NodeDatabase.SQLTABLENAME + " WHERE PLAYERID = ?) " +
+			"ORDER BY TIME DESC, " + SQLORDER
+		);
+		
+		synchronized(statement)
+		{
+			statement.setInt(1, player.getId());
+			
+			Savepoint save = setSavepoint();
+			
+			try
+			{
+				ResultSet result = statement.executeQuery();
+			
+				try
+				{
+					if(!result.next())
+						return null;
+					
+					return get(result);
+				}
+				finally
+				{
+					result.close();
+				}
+			}
+			catch(SQLException exception)
+			{
+				rollback(save);
+				throw exception;
+			}
+			catch(RuntimeException exception)
+			{
+				rollback(save);
+				throw exception;
+			}
+			finally
+			{
+				releaseSavepoint(save);
+			}
+		}
+	}
 
 	private static final int PS_SIZE = getUniqueRandom();
 	

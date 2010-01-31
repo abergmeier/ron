@@ -216,10 +216,7 @@ extends XmlRpcServlet
 				allLost = allLost && otherPlayer.hasLost();
 				
 				for(Segment segment : segments)
-				{
-					if(segment == null)
-						continue;
-					
+				{			
 					if(newUpdateTime.after(segment.getTime()))
 						continue; //update is already "older"
 					
