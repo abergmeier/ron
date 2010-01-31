@@ -47,13 +47,19 @@ extends AbstractDatabase<ViewSegment>
 		Vector2f posVector = new Vector2f(player.getPosition().getLatitude(), player.getPosition().getLongitude());
 		float radius = calculateSightRadius(posVector, RADIUS);
 		
+		//TODO: Understand when collision modifies the vector
+		//and remove the buffers
+		Vector2f start = new Vector2f();
+		Vector2f end = new Vector2f();
 		for(Segment segment : segments)
 		{
 			if(contains(player, segment))
 				continue; //already at device
 			
+			start.set(segment.getStart().toVector());
+			end.set(segment.getEnd().toVector());
 			//we actually have to test now
-			succeeded = Collision.GetIntersections(posVector, radius, segment.getStart().toVector(), segment.getEnd().toVector(), collidingVectors);
+			succeeded = Collision.GetIntersections(posVector, radius, start, end, collidingVectors);
 			
 			if(!succeeded)
 				continue; //no intersection or player already knows
