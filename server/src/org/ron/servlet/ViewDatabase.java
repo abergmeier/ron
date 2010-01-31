@@ -280,13 +280,21 @@ extends AbstractDatabase<ViewSegment>
 	protected boolean contains(int playerId, int segmentId)
 	throws SQLException
 	{
+		//when latitudes are not set - the whole segment
+		//is in view
+		
 		PreparedStatement statement = getPreparedStatement
 		(
 			PS_CONTAINS,
 			"SELECT " + SQLFIELDS + " " +
 			"FROM " + SQLTABLENAME + " " +
 			"WHERE " +
-				"PLAYERID = ? AND SEGMENTID = ?"
+				"PLAYERID = ? AND " + 
+				"SEGMENTID = ? AND " +
+				"START_LAT IS NULL AND " +
+				"START_LNG IS NULL AND " +
+				"END_LAT IS NULL AND " +
+				"END_LNG IS NULL"
 		);
 		
 		synchronized(statement)
@@ -301,15 +309,12 @@ extends AbstractDatabase<ViewSegment>
 				if(!result.next())
 					return false;
 				
-				//TODO: check for NULL!
-				
-				//when latitudes are not set - the whole segment
-				//is in view
-				
-				return getStartLatitude(result) == Float.NaN
-				&& getStartLongitude(result) == Float.NaN
-				&& getEndLatitude(result) == Float.NaN
-				&& getEndLongitude(result) == Float.NaN;
+				getPlayerId(result);
+				return true;
+			}
+			catch(NullPointerException exception)
+			{
+				return false;
 			}
 			finally
 			{
@@ -443,9 +448,14 @@ extends AbstractDatabase<ViewSegment>
 	}
 
 	protected int getPlayerId(ResultSet result)
-	throws SQLException
+	throws SQLException, NullPointerException
 	{
-		return result.getInt(1);
+		int value = result.getInt(1);
+		
+		if(result.wasNull())
+			throw new NullPointerException("No Result");
+		
+		return value;
 	}
 
 	@Override
