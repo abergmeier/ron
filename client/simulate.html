@@ -762,7 +762,8 @@
 			var _watchID;
 			
 			//var ServerUrl = "http://ron.lcid-fire.org/server.php";
-			var serverUrl = "http://localhost:8080/";
+			//var serverUrl = "http://localhost:8080/";
+			var serverUrl = document.location.protocol + "//" + document.location.host + "/";
 		
 			function callRPCMethod(methodName)
 			{
