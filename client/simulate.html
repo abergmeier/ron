@@ -668,13 +668,13 @@
 
 			Line.prototype.setPartial = function(startLat, startLng, endLat, endLng)
 			{
-				if(!isPartial())
+				if(!this.isPartial())
 					return; //we already have the whole line
 
 				var start = new google.maps.LatLng(startLat, startLng);
 				var end = new google.maps.LatLng(endLat, endLng);
 					
-				var polyLine = new google.maps.Polyline
+				var polyline = new google.maps.Polyline
 				(
 					{
 			       		path:[start, end],
@@ -708,7 +708,7 @@
 			Player.prototype.addPartialLine = function(segmentId, startLat, startLng, endLat, endLng)
 			{
 				var line = this.getLine(segmentId);
-				line.addPartial(startLat, startLng, endLat, endLng);
+				line.setPartial(startLat, startLng, endLat, endLng);
 			};
 
 			Player.prototype.addLine = function(segmentId, startLat, startLng, endLat, endLng)
@@ -871,9 +871,9 @@
 					var segmentData = segmentArray[index];
 
 					if(segmentData[0] == "segment")
-						player.addLine(player, segmentData[1], segmentData[2], segmentData[3], segmentData[4], segmentData[5]);
+						player.addLine(segmentData[1], segmentData[2], segmentData[3], segmentData[4], segmentData[5]);
 					else
-						player.addPartialLine(player, segmentData[1], segmentData[2], segmentData[3], segmentData[4], segmentData[5]);
+						player.addPartialLine(segmentData[1], segmentData[2], segmentData[3], segmentData[4], segmentData[5]);
 					
 				}
 			}
