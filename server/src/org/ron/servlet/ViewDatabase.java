@@ -51,6 +51,7 @@ extends AbstractDatabase<ViewSegment>
 		//and remove the buffers
 		Vector2f start = new Vector2f();
 		Vector2f end = new Vector2f();
+		
 		for(Segment segment : segments)
 		{
 			if(contains(player, segment))
@@ -58,6 +59,7 @@ extends AbstractDatabase<ViewSegment>
 			
 			start.set(segment.getStart().toVector());
 			end.set(segment.getEnd().toVector());
+			
 			//we actually have to test now
 			succeeded = Collision.GetIntersections(posVector, radius, start, end, collidingVectors);
 			
@@ -67,7 +69,17 @@ extends AbstractDatabase<ViewSegment>
 			buffer[0] = segment.getStart().toVector();
 			buffer[1] = segment.getEnd().toVector();
 			
-			if(Arrays.equals(collidingVectors, buffer))
+			boolean equals = Arrays.equals(collidingVectors, buffer);
+			
+			if(!equals)
+			{
+				buffer[1] = segment.getStart().toVector();
+				buffer[0] = segment.getEnd().toVector();
+			
+				equals = Arrays.equals(collidingVectors, buffer);
+			}
+			
+			if(equals)
 			{
 				add(player, segment); //insert whole segment
 				writer.add(segment);
