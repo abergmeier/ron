@@ -261,25 +261,41 @@ implements Set<Node>
 	protected int getPlayerId(ResultSet result)
 	throws SQLException
 	{
-		return result.getInt(1);
+		int value = result.getInt(1);
+		if(result.wasNull())
+			throw new NullPointerException("SQL NULL");
+		
+		return value;
 	}
 	
 	protected float getLatitude(ResultSet result)
 	throws SQLException
 	{
-		return result.getFloat(2);
+		float value = result.getFloat(2);
+		if(result.wasNull())
+			throw new NullPointerException("SQL NULL");
+		
+		return value;
 	}
 	
 	protected float getLongtitude(ResultSet result)
 	throws SQLException
 	{
-		return result.getFloat(3);
+		float value = result.getFloat(3);
+		if(result.wasNull())
+			throw new NullPointerException("SQL NULL");
+		
+		return value;
 	}
 	
 	protected int getNodeId(ResultSet result)
 	throws SQLException
 	{
-		return result.getInt(4);
+		int value = result.getInt(4);
+		if(result.wasNull())
+			throw new NullPointerException("SQL NULL");
+		
+		return value;
 	}
 	
 	public int indexOf(Node node)

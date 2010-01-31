@@ -97,19 +97,33 @@ extends AbstractDatabase<Segment>
 	protected int getSegmentId(ResultSet result)
 	throws SQLException
 	{
-		return result.getInt(1);
+		int value = result.getInt(1);
+		if(result.wasNull())
+			throw new SQLException("SQL NULL");
+		
+		return value;
 	}
 	
 	private int getSegmentStartNodeId(ResultSet result)
 	throws SQLException
 	{
-		return result.getInt(2);	
+		int value = result.getInt(2);
+		
+		if(result.wasNull())
+			throw new SQLException("SQL NULL");
+		
+		return value;
 	}
 	
 	protected Calendar getSegmentTime(ResultSet result)
 	throws SQLException
 	{
-		return getSegmentTime(result.getInt(4));
+		int value = result.getInt(4);
+		
+		if(result.wasNull())
+			throw new SQLException("SQL NULL");
+		
+		return getSegmentTime(value);
 	}
 	
 	protected Calendar getSegmentTime(int timeS)
@@ -123,7 +137,12 @@ extends AbstractDatabase<Segment>
 	private int getSegmentEndNodeId(ResultSet result)
 	throws SQLException
 	{
-		return result.getInt(3);
+		int value = result.getInt(3);
+		
+		if(result.wasNull())
+			throw new SQLException("SQL NULL");
+		
+		return value;
 	}
 	
 	@Override
