@@ -190,9 +190,9 @@ extends AbstractDatabase<Segment>
 			
 			synchronized(statement)
 			{
-				statement.setFloat(1, startNodeId);
-				statement.setFloat(2, endNodeId);
-				statement.setFloat(3, Calendar.getInstance().get(Calendar.SECOND));
+				statement.setInt(1, startNodeId);
+				statement.setInt(2, endNodeId);
+				statement.setInt(3, Calendar.getInstance().get(Calendar.SECOND));
 						
 				statement.executeUpdate();
 			}
@@ -352,8 +352,8 @@ extends AbstractDatabase<Segment>
 
 			synchronized(statement)
 			{
-				statement.setFloat(1, segment.getStart().getId());
-				statement.setFloat(2, segment.getEnd().getId());
+				statement.setInt(1, segment.getStart().getId());
+				statement.setInt(2, segment.getEnd().getId());
 
 				ResultSet result = statement.executeQuery();
 				
