@@ -19,7 +19,7 @@ extends AbstractDatabase<ViewSegment>
 	private static final String SQLTABLENAME = "SEGMENTVIEW";
 	private static final String SQLORDER = "PLAYERID ASC, SEGMENTID ASC, START_LAT ASC, START_LNG ASC";
 	
-	private static final float RADIUS = 50;
+	private static final float RADIUS = 200;
 	
 	private final SegmentDatabase _segments;
 	
