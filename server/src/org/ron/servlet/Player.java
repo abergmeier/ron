@@ -3,7 +3,7 @@ package org.ron.servlet;
 import org.ron.PositionCollision;
 
 public interface Player
-extends Position, IntegerIdObject
+extends IntegerIdObject
 {
 	public String getName();
 
@@ -12,10 +12,6 @@ extends Position, IntegerIdObject
 	public void setPosition(float lat, float lng);
 	
 	public boolean hasLost();
-
-	public float getLatitude();
-
-	public float getLongitude();
 	
 	public Segment[] getSegments();
 	

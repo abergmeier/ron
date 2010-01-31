@@ -12,6 +12,60 @@ import org.ron.PositionCollision;
 public class PlayerImpl
 implements Player
 {
+	private final class PositionWrapper
+	implements Position
+	{
+		private final Player _player;
+		
+		public PositionWrapper(Player player)
+		{
+			_player = player;
+		}
+		
+		@Override
+		public boolean equals(Object object)
+		{
+			if(object instanceof Position)
+			{
+				Position position = (Position)object;
+				
+				return
+					position.getLatitude() == getLatitude()
+					&& position.getLongitude() == getLongitude();
+			}
+			
+			return false;
+		}
+
+		@Override
+		public float getLatitude()
+		{
+			try
+			{
+				return _database.getLatitude(_player);
+			}
+			catch (SQLException e)
+			{
+				throw wrapInRuntimeException(e);
+			}	
+		}
+
+		@Override
+		public float getLongitude()
+		{
+			try
+			{
+				return _database.getLongitude(_player);
+			}
+			catch (SQLException e)
+			{
+				throw wrapInRuntimeException(e);
+			}
+		}
+	}
+	
+	private final Position _position = new PositionWrapper(this);
+	
 	private int _id;
 	private PlayerDatabase _database;
 	private String _name;
@@ -76,7 +130,7 @@ implements Player
 	
 	public Position getPosition()
 	{
-		return this;
+		return _position;
 	}
 	
 	public boolean hasLost()
@@ -90,29 +144,11 @@ implements Player
 			throw wrapInRuntimeException(exception);
 		}
 	}
-
-	public float getLatitude()
-	{
-		
-		try
-		{
-			return _database.getLatitude(this);
-		}
-		catch (SQLException e)
-		{
-			throw wrapInRuntimeException(e);
-		}
-	}
-
-	public float getLongitude()
 	{
 		try
 		{
-			return _database.getLongitude(this);
 		}
-		catch (SQLException e)
 		{
-			throw wrapInRuntimeException(e);
 		}
 	}
 	

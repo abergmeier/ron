@@ -42,7 +42,7 @@ extends AbstractDatabase<ViewSegment>
 		Vector2f[] buffer = new Vector2f[2];
 		boolean succeeded;
 		
-		Vector2f posVector = new Vector2f(player.getLatitude(), player.getLongitude());
+		Vector2f posVector = new Vector2f(player.getPosition().getLatitude(), player.getPosition().getLongitude());
 		float radius = calculateSightRadius(posVector, RADIUS);
 		
 		for(Segment segment : segments)
