@@ -85,7 +85,7 @@ implements Set<Player>
 		(
 				"CREATE TABLE IF NOT EXISTS " + SQLTABLENAME + " " + 
 				"(" +
-    				"ID INTEGER PRIMARY KEY NOT NULL," +
+    				"ID INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL," +
     				"LAT REAL NULL," +
     				"LNG REAL NULL," +
     				"NAME TEXT NOT NULL," +

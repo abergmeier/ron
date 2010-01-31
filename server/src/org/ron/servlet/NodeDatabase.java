@@ -77,7 +77,7 @@ implements Set<Node>
 					"PLAYERID INTEGER NOT NULL," +
 					"LAT REAL NOT NULL, " +
 					"LNG REAL NOT NULL," +
-					"ID INTEGER PRIMARY KEY NOT NULL," +
+					"ID INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL," +
 					"FOREIGN KEY (PLAYERID) REFERENCES " + PlayerDatabase.SQLTABLENAME + "(" + PlayerDatabase.SQLIDCOLUMN + ")" +
 				");" +
 				"CREATE UNIQUE INDEX \"position-index\" on node (LAT, LNG);"
