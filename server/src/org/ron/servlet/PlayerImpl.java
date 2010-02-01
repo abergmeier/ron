@@ -4,6 +4,7 @@ import java.sql.SQLException;
 import java.util.Calendar;
 import java.util.Collection;
 
+import javax.vecmath.Vector2d;
 import javax.vecmath.Vector2f;
 
 import org.ron.Collision;
@@ -191,11 +192,14 @@ implements Player
 				return; //player hasn't moved since setting last node
 		}
 		
-		Vector2f posVector = new Vector2f(position.getLatitude(), position.getLongitude());
+		Vector2d posVector = new Vector2d(position.getLatitude(), position.getLongitude());
+		Vector2d[] buffer = new Vector2d[]{new Vector2d(), new Vector2d()};
 		
 		for(Segment segment : segments)
 		{
-			Collision.testCollision(posVector, segment.getStart().toVector(), segment.getEnd().toVector());
+			buffer[0].set(segment.getStart().toVector());
+			buffer[1].set(segment.getEnd().toVector());
+			Collision.testCollision(posVector, buffer[0], buffer[1]);
 		}
 	}
 	

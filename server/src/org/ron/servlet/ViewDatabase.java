@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 
+import javax.vecmath.Vector2d;
 import javax.vecmath.Vector2f;
 
 import org.ron.Collision;
@@ -32,7 +33,7 @@ extends AbstractDatabase<ViewSegment>
 		_segments = segments;
 	}
 	
-	private float calculateSightRadius(Vector2f posVector, float meters)
+	private float calculateSightRadius(Vector2d posVector, float meters)
 	{
 		return SIGHT_RADIUS; 
 	}
@@ -44,13 +45,13 @@ extends AbstractDatabase<ViewSegment>
 		Vector2f[] buffer = new Vector2f[2];
 		boolean succeeded;
 		
-		Vector2f posVector = new Vector2f(player.getPosition().getLatitude(), player.getPosition().getLongitude());
+		Vector2d posVector = new Vector2d(player.getPosition().getLatitude(), player.getPosition().getLongitude());
 		float radius = calculateSightRadius(posVector, RADIUS);
 		
 		//TODO: Understand when collision modifies the vector
 		//and remove the buffers
-		Vector2f start = new Vector2f();
-		Vector2f end = new Vector2f();
+		Vector2d start = new Vector2d();
+		Vector2d end = new Vector2d();
 		
 		for(Segment segment : segments)
 		{

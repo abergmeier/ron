@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import org.ron.Collision;
 import org.ron.PositionCollision;
 
+import javax.vecmath.Vector2d;
 import javax.vecmath.Vector2f;
 
 
@@ -17,23 +18,33 @@ extends Canvas
 	 * 
 	 */
 	private static final long serialVersionUID = 1779914013346998246L;
-	private Vector2f _circle = null;
+	private Vector2d _circle = new Vector2d();
 	private float _r = Float.NaN;
 	private ArrayList<Vector2f[]> _nodes = new ArrayList<Vector2f[]>();
 	
 	public RadarCanvas(Vector2f circle, float r)
 	{
 		setBackground(Color.WHITE);
-		_circle = circle;
+		_circle.set(circle);
 		_r = r;
 	}
-	
+
 	private void drawCircle(Graphics graphic, Vector2f midPoint, float r)
+	{
+		drawCircle(graphic, (int)(midPoint.getX() - r), (int)(midPoint.getY() - r), r);
+	}
+	
+	private void drawCircle(Graphics graphic, Vector2d midPoint, float r)
+	{
+		drawCircle(graphic, (int)(midPoint.getX() - r), (int)(midPoint.getY() - r), r);
+	}
+	
+	private void drawCircle(Graphics graphic, int x, int y, float r)
 	{
 		graphic.drawArc
 		(
-			(int)(midPoint.getX() - r),
-			(int)(midPoint.getY() - r),
+			x,
+			y,
             (int)(r * 2),
             (int)(r * 2),
             0,
@@ -73,9 +84,19 @@ extends Canvas
 		
 		Vector2f[] intersections = new Vector2f[]{new Vector2f(), new Vector2f()};
 		
+		try {
+			Collision.GetIntersections(new Vector2d(2.5, 3), 2f, new Vector2d(4d, 3d), new Vector2d(5.5d, 5), intersections);
+		} catch (PositionCollision e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 		try
 		{
 			boolean succeeded;
+			
+			Vector2d start = new Vector2d();
+			Vector2d end = new Vector2d();
 			
 			for(Vector2f[] nodes : _nodes)
 			{
@@ -87,7 +108,10 @@ extends Canvas
 						
 					times[0] = System.nanoTime();
 					
-					succeeded = Collision.GetIntersections(_circle, _r, nodes[i - 1], nodes[i], intersections);
+					start.set(nodes[i - 1]);
+					end.set(nodes[i]);
+					
+					succeeded = Collision.GetIntersections(_circle, _r, start, end, intersections);
 					times[0] = System.nanoTime() - times[0];
 					calcTime += times[0]; 
 			
